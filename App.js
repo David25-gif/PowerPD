@@ -1,35 +1,62 @@
-import { StyleSheet, Text, View } from 'react-native';
+import * as React from 'react';
+import { NavigationContainer } from '@react-navigation/native';
+import { createStackNavigator } from '@react-navigation/stack';
 
-// You can import supported modules from npm
-import { Card } from 'react-native-paper';
+// Importamos las pantallas
+import WelcomeScreen from './screens/WelcomeScreen';
+import LoginScreen from './screens/LoginScreen';
+import RegistroScreen from './screens/RegistroScreen';
+import HomeScreen from './screens/HomeScreen';
+import RutinasScreen from './screens/RutinasScreen';
+import PerfilScreen from './screens/PerfilScreen';
+import CompletarPerfilScreen from './screens/CompletarPerfilScreen';
+import GeneroScreen from './screens/GeneroScreen';
 
-// or any files within the Snack
-import AssetExample from './components/AssetExample';
+
+const Stack = createStackNavigator();
 
 export default function App() {
   return (
-    <View style={styles.container}>
-      <Text style={styles.paragraph}>
-        Change code in the editor and watch it change on your phone! Save to get a shareable url.
-      </Text>
-      <Card>
-        <AssetExample />
-      </Card>
-    </View>
+    <NavigationContainer>
+      <Stack.Navigator initialRouteName="Welcome">
+        <Stack.Screen
+          name="Welcome"
+          component={WelcomeScreen}
+          options={{ headerShown: false }}
+        />
+
+        <Stack.Screen name="CompletarPerfil"
+         component={CompletarPerfilScreen}
+        />
+
+        
+        <Stack.Screen
+          name="Login"
+          component={LoginScreen}
+          options={{ title: 'Iniciar Sesión' }}
+        />
+        <Stack.Screen
+          name="Registro"
+          component={RegistroScreen}
+          options={{ title: 'Registro' }}
+        />
+        <Stack.Screen
+          name="Home"
+          component={HomeScreen}
+          options={{ title: 'Inicio' }}
+        />
+        <Stack.Screen
+          name="Rutinas"
+          component={RutinasScreen}
+          options={{ title: 'Rutinas' }}
+        />
+        <Stack.Screen
+          name="Perfil"
+          component={PerfilScreen}
+          options={{ title: 'Perfil' }}
+        />
+      </Stack.Navigator>
+    </NavigationContainer>
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    justifyContent: 'center',
-    backgroundColor: '#ecf0f1',
-    padding: 8,
-  },
-  paragraph: {
-    margin: 24,
-    fontSize: 18,
-    fontWeight: 'bold',
-    textAlign: 'center',
-  },
-});
