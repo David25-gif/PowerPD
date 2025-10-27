@@ -2,6 +2,9 @@ import React, { useState } from 'react';
 import { View, Text, TextInput, Button, StyleSheet, Alert, TouchableOpacity, Platform } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Ionicons } from '@expo/vector-icons';
+import { signInWithEmailAndPassword } from "firebase/auth";
+import { auth } from "../firebaseConfig";
+
 
 export default function LoginScreen({ navigation }) {
   const [email, setEmail] = useState('');
@@ -18,32 +21,42 @@ export default function LoginScreen({ navigation }) {
   };
 
   const handleLogin = async () => {
-    if (!email || !password) {
-      mostrarAlerta('Campos incompletos', 'Por favor, completa ambos campos.');
-      return;
+  if (!email || !password) {
+    mostrarAlerta('Campos incompletos', 'Por favor, completa ambos campos.');
+    return;
+  }
+
+  try {
+    // 🔥 Autenticación con Firebase
+    const userCredential = await signInWithEmailAndPassword(auth, email, password);
+    const user = userCredential.user;
+
+    mostrarAlerta('Inicio de sesión exitoso', `¡Bienvenido, ${user.displayName || user.email}!`);
+    navigation.navigate('Home');
+
+  } catch (error) {
+    console.log("Error al iniciar sesión:", error.code);
+
+    // Manejo de errores comunes de Firebase
+    switch (error.code) {
+      case 'auth/invalid-email':
+        mostrarAlerta('Correo inválido', 'El formato del correo no es correcto.');
+        break;
+      case 'auth/user-not-found':
+        mostrarAlerta('Usuario no encontrado', 'No existe una cuenta con ese correo.');
+        break;
+      case 'auth/wrong-password':
+        mostrarAlerta('Contraseña incorrecta', 'La contraseña ingresada no es válida.');
+        break;
+      case 'auth/invalid-credential':
+        mostrarAlerta('Error', 'Credenciales inválidas.');
+        break;
+      default:
+        mostrarAlerta('Error', 'No se pudo iniciar sesión. Intenta más tarde.');
     }
+  }
+};
 
-    try {
-      const storedUser = await AsyncStorage.getItem('usuario');
-
-      if (!storedUser) {
-        mostrarAlerta('Usuario no encontrado', 'Primero debes registrarte.');
-        return;
-      }
-
-      const user = JSON.parse(storedUser);
-
-      if (email === user.email && password === user.password) {
-        mostrarAlerta('Inicio de sesión exitoso', `¡Bienvenido, ${user.nombre}!`);
-        navigation.navigate('Home'); // Redirige a la pantalla principal
-      } else {
-        mostrarAlerta('Error', 'Correo o contraseña incorrectos.');
-      }
-    } catch (error) {
-      console.log('Error al iniciar sesión:', error);
-      mostrarAlerta('Error', 'Ocurrió un problema al verificar tus datos.');
-    }
-  };
 
   return (
     <View style={styles.container}>

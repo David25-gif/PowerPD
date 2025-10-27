@@ -1,16 +1,12 @@
 import React, { useState } from 'react';
-import {
-  View,
-  Text,
-  TextInput,
-  Button,
-  StyleSheet,
-  Alert,
-  TouchableOpacity,
-  Platform,
-} from 'react-native';
+import { View, Text, TextInput, Button, StyleSheet, Alert, TouchableOpacity, Platform } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Ionicons } from '@expo/vector-icons';
+import { createUserWithEmailAndPassword, updateProfile } from "firebase/auth";
+import { auth } from "../firebaseConfig";
+
+
+
 
 export default function RegistroScreen({ navigation }) {
   const [nombre, setNombre] = useState('');
@@ -43,63 +39,72 @@ export default function RegistroScreen({ navigation }) {
     }
   };
 
-  // --- Lógica principal del registro ---
   const handleRegistro = async () => {
-    if (!nombre || !email || !password || !confirmPassword) {
-      mostrarAlerta('Campos incompletos', 'Por favor completa todos los campos.');
-      return;
+  if (!nombre || !email || !password || !confirmPassword) {
+    mostrarAlerta('Campos incompletos', 'Por favor completa todos los campos.');
+    return;
+  }
+
+  if (!validarEmail(email)) {
+    mostrarAlerta('Correo inválido', 'Ingresa un correo electrónico válido.');
+    return;
+  }
+
+  const detalle = validarPasswordDetalle(password);
+  if (
+    !detalle.minLength ||
+    !detalle.hasLower ||
+    !detalle.hasUpper ||
+    !detalle.hasNumber ||
+    !detalle.hasSymbol
+  ) {
+    let mensajes = [];
+    if (!detalle.minLength) mensajes.push('- Mínimo 8 caracteres');
+    if (!detalle.hasUpper) mensajes.push('- Al menos una letra MAYÚSCULA');
+    if (!detalle.hasLower) mensajes.push('- Al menos una letra minúscula');
+    if (!detalle.hasNumber) mensajes.push('- Al menos un número');
+    if (!detalle.hasSymbol)
+      mensajes.push('- Al menos un símbolo (ej: ! @ # $ % _ - . , etc.)');
+
+    const texto = 'La contraseña debe cumplir:\n' + mensajes.join('\n');
+    mostrarAlerta('Contraseña insegura', texto);
+    return;
+  }
+
+  if (password !== confirmPassword) {
+    mostrarAlerta('Error', 'Las contraseñas no coinciden.');
+    return;
+  }
+
+  try {
+    // ✅ Crear el usuario en Firebase Authentication
+    const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+
+    // ✅ Guardar el nombre del usuario en su perfil
+    await updateProfile(userCredential.user, { displayName: nombre });
+
+    mostrarAlerta('✅ Registro exitoso', 'Tu cuenta ha sido creada con éxito.');
+
+    // Redirigir al login
+    navigation.navigate('Login');
+
+    // Limpiar los campos
+    setNombre('');
+    setEmail('');
+    setPassword('');
+    setConfirmPassword('');
+  } catch (error) {
+    console.log("Error en Firebase:", error.message);
+
+    if (error.code === 'auth/email-already-in-use') {
+      mostrarAlerta('Error', 'El correo ya está registrado.');
+    } else if (error.code === 'auth/weak-password') {
+      mostrarAlerta('Error', 'La contraseña es demasiado débil.');
+    } else {
+      mostrarAlerta('Error', 'No se pudo crear la cuenta.');
     }
-
-    if (!validarEmail(email)) {
-      mostrarAlerta('Correo inválido', 'Ingresa un correo electrónico válido.');
-      return;
-    }
-
-    const detalle = validarPasswordDetalle(password);
-    if (
-      !detalle.minLength ||
-      !detalle.hasLower ||
-      !detalle.hasUpper ||
-      !detalle.hasNumber ||
-      !detalle.hasSymbol
-    ) {
-      let mensajes = [];
-      if (!detalle.minLength) mensajes.push('- Mínimo 8 caracteres');
-      if (!detalle.hasUpper) mensajes.push('- Al menos una letra MAYÚSCULA');
-      if (!detalle.hasLower) mensajes.push('- Al menos una letra minúscula');
-      if (!detalle.hasNumber) mensajes.push('- Al menos un número');
-      if (!detalle.hasSymbol)
-        mensajes.push('- Al menos un símbolo (ej: ! @ # $ % _ - . , etc.)');
-
-      const texto = 'La contraseña debe cumplir:\n' + mensajes.join('\n');
-      mostrarAlerta('Contraseña insegura', texto);
-      return;
-    }
-
-    if (password !== confirmPassword) {
-      mostrarAlerta('Error', 'Las contraseñas no coinciden.');
-      return;
-    }
-
-    try {
-      const user = { nombre, email, password };
-      await AsyncStorage.setItem('usuario', JSON.stringify(user));
-
-      mostrarAlerta('✅ Registro exitoso', 'Tu cuenta ha sido creada con éxito.');
-
-      // Redirigir al login
-      navigation.navigate('Login');
-
-      // Limpiar los campos
-      setNombre('');
-      setEmail('');
-      setPassword('');
-      setConfirmPassword('');
-    } catch (error) {
-      console.log('Error al guardar usuario:', error);
-      mostrarAlerta('Error', 'No se pudo guardar la información.');
-    }
-  };
+  }
+};
 
   return (
     <View style={styles.container}>
