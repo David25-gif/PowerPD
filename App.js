@@ -3,14 +3,13 @@ import { View, SafeAreaView, StyleSheet } from "react-native";
 import { NavigationContainer } from "@react-navigation/native";
 import { createStackNavigator } from "@react-navigation/stack";
 
-// Pantallas
+// Screens
 import WelcomeScreen from "./screens/WelcomeScreen";
 import LoginScreen from "./screens/LoginScreen";
 import RegistroScreen from "./screens/RegistroScreen";
-import CompletarPerfil from "./screens/CompletarPerfil";
-import GeneroScreen from "./screens/GeneroScreen";
+import GenderScreen from "./screens/GenderScreen";
+import EdadPesoScreen from "./screens/EdadPesoScreen";
 
-// Pantallas internas de Home
 import RutinasScreen from "./screens/RutinasScreen";
 import DesafiosScreen from "./screens/DesafiosScreen";
 import AlertasScreen from "./screens/AlertasScreen";
@@ -18,7 +17,7 @@ import PerfilScreen from "./screens/PerfilScreen";
 import Navbar from "./screens/Navbar";
 
 const Stack = createStackNavigator();
-const GREEN = "#16a34a"; // Color verde consistente
+const GREEN = "#16a34a";
 
 // Home con Navbar
 function HomeTabs() {
@@ -55,10 +54,6 @@ export default function App() {
           options={{ headerShown: false }}
         />
         <Stack.Screen
-          name="CompletarPerfil"
-          component={CompletarPerfil}
-        />
-        <Stack.Screen
           name="Login"
           component={LoginScreen}
           options={{ title: "Iniciar Sesión" }}
@@ -69,9 +64,19 @@ export default function App() {
           options={{ title: "Registro" }}
         />
         <Stack.Screen
+          name="Genero"
+          component={GenderScreen}
+          options={{ title: "Selecciona tu género" }}
+        />
+        <Stack.Screen
+          name="EdadPesoScreen"
+          component={EdadPesoScreen}
+          options={{ title: "Completa tu perfil" }}
+        />
+        <Stack.Screen
           name="Home"
-          component={HomeTabs} // Aquí va la pantalla con navbar
-          options={{ headerShown: false }} // Oculta el header para la navbar
+          component={HomeTabs}
+          options={{ headerShown: false }}
         />
       </Stack.Navigator>
     </NavigationContainer>
@@ -81,6 +86,6 @@ export default function App() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#f3f4f6", // fondo uniforme
+    backgroundColor: "#f3f4f6",
   },
 });
