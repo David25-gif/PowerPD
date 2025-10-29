@@ -1,47 +1,120 @@
-import React, { useState } from 'react';
-import { View, Text, TextInput, Button, StyleSheet } from 'react-native';
-import { auth, db } from '../firebaseConfig';
-import { doc, updateDoc } from 'firebase/firestore';
+import React, { useState, useContext } from "react";
+import {
+  View,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  StyleSheet,
+  KeyboardAvoidingView,
+  Platform,
+} from "react-native";
+import { UserContext } from "../App"; // 👈 importa el contexto desde App.js
 
-export default function EdadPesoScreen({ navigation, route }) {
-  const genero = route?.params?.genero || "No especificado";
-  const [edad, setEdad] = useState('');
-  const [peso, setPeso] = useState('');
+const EdadPesoScreen = ({ navigation }) => {
+  const { updateUserData } = useContext(UserContext);
 
-  const handleGuardar = async () => {
-  if (!edad || !peso) {
-    alert("Por favor completa todos los campos");
-    return;
-  }
-  try {
-    const uid = auth.currentUser.uid;
-    await updateDoc(doc(db, "usuarios", uid), { 
-      edad, 
-      peso, 
-      profileComplete: true // <-- agregado
+  const [edad, setEdad] = useState("");
+  const [peso, setPeso] = useState("");
+  const [altura, setAltura] = useState("");
+
+  const handleContinue = () => {
+    if (!edad || !peso || !altura) {
+      alert("Por favor, completa todos los campos.");
+      return;
+    }
+
+    // Actualizamos el contexto global con los datos del usuario
+    updateUserData({
+      edad: parseInt(edad),
+      peso: parseFloat(peso),
+      altura: parseFloat(altura),
     });
-    navigation.replace("Home");
-  } catch (error) {
-    console.log("Error actualizando perfil:", error);
-    alert("Error al actualizar el perfil");
-  }
-};
 
+    // Navegamos a la pantalla principal (Home)
+    navigation.replace("Home");
+  };
 
   return (
-    <View style={styles.container}>
+    <KeyboardAvoidingView
+      behavior={Platform.OS === "ios" ? "padding" : "height"}
+      style={styles.container}
+    >
       <Text style={styles.title}>Completa tu perfil</Text>
-      <Text style={styles.subtitle}>Género seleccionado: {genero}</Text>
-      <TextInput style={styles.input} placeholder="Edad" value={edad} onChangeText={setEdad} keyboardType="numeric" />
-      <TextInput style={styles.input} placeholder="Peso (kg)" value={peso} onChangeText={setPeso} keyboardType="numeric" />
-      <Button title="Guardar" onPress={handleGuardar} />
-    </View>
+
+      <Text style={styles.label}>Edad</Text>
+      <TextInput
+        style={styles.input}
+        keyboardType="numeric"
+        value={edad}
+        onChangeText={setEdad}
+        placeholder="Ej: 25"
+      />
+
+      <Text style={styles.label}>Peso (kg)</Text>
+      <TextInput
+        style={styles.input}
+        keyboardType="numeric"
+        value={peso}
+        onChangeText={setPeso}
+        placeholder="Ej: 70"
+      />
+
+      <Text style={styles.label}>Altura (cm)</Text>
+      <TextInput
+        style={styles.input}
+        keyboardType="numeric"
+        value={altura}
+        onChangeText={setAltura}
+        placeholder="Ej: 175"
+      />
+
+      <TouchableOpacity style={styles.button} onPress={handleContinue}>
+        <Text style={styles.buttonText}>Continuar</Text>
+      </TouchableOpacity>
+    </KeyboardAvoidingView>
   );
-}
+};
+
+export default EdadPesoScreen;
 
 const styles = StyleSheet.create({
-  container: { flex:1, justifyContent:'center', alignItems:'center', padding:20, backgroundColor:'#f5f7fa' },
-  title: { fontSize:24, fontWeight:'bold', marginBottom:10 },
-  subtitle:{ fontSize:16, marginBottom:20 },
-  input:{ width:"90%", borderWidth:1, borderColor:"#ccc", borderRadius:10, padding:10, marginBottom:15, backgroundColor:"#fff" }
+  container: {
+    flex: 1,
+    backgroundColor: "#f3f4f6",
+    alignItems: "center",
+    justifyContent: "center",
+    paddingHorizontal: 20,
+  },
+  title: {
+    fontSize: 22,
+    fontWeight: "bold",
+    color: "#16a34a",
+    marginBottom: 30,
+  },
+  label: {
+    alignSelf: "flex-start",
+    marginBottom: 5,
+    color: "#374151",
+    fontWeight: "500",
+  },
+  input: {
+    width: "100%",
+    backgroundColor: "#fff",
+    borderWidth: 1,
+    borderColor: "#d1d5db",
+    borderRadius: 10,
+    padding: 10,
+    marginBottom: 20,
+  },
+  button: {
+    backgroundColor: "#16a34a",
+    paddingVertical: 12,
+    paddingHorizontal: 40,
+    borderRadius: 10,
+  },
+  buttonText: {
+    color: "#fff",
+    fontWeight: "600",
+    fontSize: 16,
+  },
 });
