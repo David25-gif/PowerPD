@@ -62,18 +62,17 @@ export default function RegistroScreen({ navigation }) {
       const userCredential = await createUserWithEmailAndPassword(auth, email, password);
       await updateProfile(userCredential.user, { displayName: nombre });
 
-      // 🔹 Crear documento inicial en Firestore
       await setDoc(doc(db, "usuarios", userCredential.user.uid), {
         nombre,
         email,
         genero: "",
         edad: "",
-        peso: ""
+        peso: "",
+        profileComplete: false // <- campo agregado para que LoginScreen pueda verificar
       });
 
       mostrarAlerta('✅ Registro exitoso', 'Tu cuenta ha sido creada con éxito.');
 
-      // 🔹 Redirigir a GenderScreen
       navigation.replace("Genero");
 
     } catch (error) {
@@ -115,7 +114,6 @@ export default function RegistroScreen({ navigation }) {
   );
 }
 
-// --- ESTILOS (igual que antes) ---
 
 const styles = StyleSheet.create({
   container: {

@@ -3,7 +3,7 @@ import React from "react";
 import { View, Text, TouchableOpacity, StyleSheet } from "react-native";
 import { FontAwesome5, MaterialIcons } from "@expo/vector-icons";
 
-const GREEN = "#16a34a"; // color verde consistente
+const GREEN = "#16a34a"; 
 
 export default function Navbar({ activeTab, setActiveTab }) {
   return (

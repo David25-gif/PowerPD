@@ -9,20 +9,24 @@ export default function EdadPesoScreen({ navigation, route }) {
   const [peso, setPeso] = useState('');
 
   const handleGuardar = async () => {
-    if (!edad || !peso) {
-      alert("Por favor completa todos los campos");
-      return;
-    }
-    try {
-      const uid = auth.currentUser.uid;
-      await updateDoc(doc(db, "usuarios", uid), { edad, peso, genero });
-      alert("Perfil actualizado correctamente");
-      navigation.replace("Home");
-    } catch (error) {
-      console.log("Error actualizando perfil:", error);
-      alert("Error al actualizar el perfil");
-    }
-  };
+  if (!edad || !peso) {
+    alert("Por favor completa todos los campos");
+    return;
+  }
+  try {
+    const uid = auth.currentUser.uid;
+    await updateDoc(doc(db, "usuarios", uid), { 
+      edad, 
+      peso, 
+      profileComplete: true // <-- agregado
+    });
+    navigation.replace("Home");
+  } catch (error) {
+    console.log("Error actualizando perfil:", error);
+    alert("Error al actualizar el perfil");
+  }
+};
+
 
   return (
     <View style={styles.container}>
