@@ -30,8 +30,8 @@ const EdadPesoScreen = ({ navigation }) => {
       altura: parseFloat(altura),
     });
 
-    // Navegamos a la pantalla principal (Home)
-    navigation.replace("Home");
+   
+    navigation.replace("ObjetivoScreen");
   };
 
   return (

@@ -1,11 +1,14 @@
-import React, { useState } from 'react';
+import React, { useState, useContext } from 'react';
 import { View, Text, TextInput, Button, StyleSheet, Alert, TouchableOpacity, Platform } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { createUserWithEmailAndPassword, updateProfile } from "firebase/auth";
 import { auth, db } from "../firebaseConfig";
 import { doc, setDoc } from 'firebase/firestore';
+import { UserContext } from '../App'; // ✅ Importa el contexto global
 
 export default function RegistroScreen({ navigation }) {
+  const { updateUserData } = useContext(UserContext); // ✅ Acceso al contexto global
+
   const [nombre, setNombre] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -62,17 +65,22 @@ export default function RegistroScreen({ navigation }) {
       const userCredential = await createUserWithEmailAndPassword(auth, email, password);
       await updateProfile(userCredential.user, { displayName: nombre });
 
+      // ✅ Guardar en Firestore
       await setDoc(doc(db, "usuarios", userCredential.user.uid), {
         nombre,
         email,
         genero: "",
         edad: "",
         peso: "",
-        profileComplete: false // <- campo agregado para que LoginScreen pueda verificar
+        profileComplete: false,
       });
+
+      // ✅ Guardar en contexto global
+      updateUserData({ nombre });
 
       mostrarAlerta('✅ Registro exitoso', 'Tu cuenta ha sido creada con éxito.');
 
+      // ✅ Ir a la pantalla de género
       navigation.replace("Genero");
 
     } catch (error) {
@@ -87,18 +95,41 @@ export default function RegistroScreen({ navigation }) {
     <View style={styles.container}>
       <Text style={styles.title}>Crear cuenta</Text>
 
-      <TextInput style={styles.input} placeholder="Nombre completo" value={nombre} onChangeText={setNombre} />
-      <TextInput style={styles.input} placeholder="Correo electrónico" keyboardType="email-address" value={email} onChangeText={setEmail} />
+      <TextInput
+        style={styles.input}
+        placeholder="Nombre completo"
+        value={nombre}
+        onChangeText={setNombre}
+      />
+      <TextInput
+        style={styles.input}
+        placeholder="Correo electrónico"
+        keyboardType="email-address"
+        value={email}
+        onChangeText={setEmail}
+      />
 
       <View style={styles.passwordContainer}>
-        <TextInput style={styles.passwordInput} placeholder="Contraseña" secureTextEntry={!showPassword} value={password} onChangeText={setPassword} />
+        <TextInput
+          style={styles.passwordInput}
+          placeholder="Contraseña"
+          secureTextEntry={!showPassword}
+          value={password}
+          onChangeText={setPassword}
+        />
         <TouchableOpacity onPress={() => setShowPassword(!showPassword)}>
           <Ionicons name={showPassword ? 'eye-off' : 'eye'} size={22} color="#333" />
         </TouchableOpacity>
       </View>
 
       <View style={styles.passwordContainer}>
-        <TextInput style={styles.passwordInput} placeholder="Confirmar contraseña" secureTextEntry={!showConfirmPassword} value={confirmPassword} onChangeText={setConfirmPassword} />
+        <TextInput
+          style={styles.passwordInput}
+          placeholder="Confirmar contraseña"
+          secureTextEntry={!showConfirmPassword}
+          value={confirmPassword}
+          onChangeText={setConfirmPassword}
+        />
         <TouchableOpacity onPress={() => setShowConfirmPassword(!showConfirmPassword)}>
           <Ionicons name={showConfirmPassword ? 'eye-off' : 'eye'} size={22} color="#333" />
         </TouchableOpacity>
@@ -113,7 +144,6 @@ export default function RegistroScreen({ navigation }) {
     </View>
   );
 }
-
 
 const styles = StyleSheet.create({
   container: {

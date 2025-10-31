@@ -3,7 +3,7 @@ import { View, SafeAreaView, StyleSheet } from "react-native";
 import { NavigationContainer } from "@react-navigation/native";
 import { createStackNavigator } from "@react-navigation/stack";
 
-// Screens
+import ObjetivoScreen from "./screens/ObjetivoScreen";
 import WelcomeScreen from "./screens/WelcomeScreen";
 import LoginScreen from "./screens/LoginScreen";
 import RegistroScreen from "./screens/RegistroScreen";
@@ -58,7 +58,6 @@ export default function App() {
     altura: 175,
     peso: 70,
     objetivo: "Tonificar",
-    valoracion: 5,
     notificacionesActivas: true,
   });
 
@@ -95,6 +94,13 @@ export default function App() {
             component={EdadPesoScreen}
             options={{ title: "Completa tu perfil" }}
           />
+
+          <Stack.Screen
+           name="ObjetivoScreen"
+           component={ObjetivoScreen}
+           options={{ title: "Tu objetivo" }}
+          />
+
           <Stack.Screen
             name="Home"
             component={HomeTabs}
