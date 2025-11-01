@@ -1,61 +1,239 @@
-import React from "react";
-import { View, Text, FlatList, TouchableOpacity, StyleSheet } from "react-native";
+import React, { useState, useEffect } from "react";
+import {
+  View,
+  Text,
+  TouchableOpacity,
+  Image,
+  StyleSheet,
+  FlatList,
+  Dimensions,
+  ScrollView,
+} from "react-native";
+import { useNavigation } from "@react-navigation/native";
+import { db, auth } from "../firebaseConfig";
+import { collection, addDoc, getDocs, query, where } from "firebase/firestore";
+import { Ionicons } from "@expo/vector-icons";
+
+const screenWidth = Dimensions.get("window").width;
+
+const predefinedRoutines = [
+  {
+    id: "1",
+    name: "Todo el cuerpo",
+    image: require("../assets/todo_cuerpo.png"),
+    color: "#FF4500",
+    key: "full-body",
+  },
+  {
+    id: "2",
+    name: "Abdominales",
+    image: require("../assets/abdominales.png"),
+    color: "#4169E1",
+    key: "abs",
+  },
+  {
+    id: "3",
+    name: "Pecho",
+    image: require("../assets/pecho.png"),
+    color: "#1E90FF",
+    key: "chest",
+  },
+  {
+    id: "4",
+    name: "Brazos",
+    image: require("../assets/brazo.png"),
+    color: "#9370DB",
+    key: "upper-arms",
+  },
+  {
+    id: "5",
+    name: "Piernas",
+    image: require("../assets/piernas.png"),
+    color: "#32CD32",
+    key: "upper-legs",
+  },
+  {
+    id: "6",
+    name: "Espalda",
+    image: require("../assets/espalda.png"),
+    color: "#00BFFF",
+    key: "back",
+  },
+];
 
 export default function RutinasScreen() {
-  const rutinas = [
-    { id: "1", nombre: "Rutina de Brazos Intensa", duracion: "30 min", nivel: "Intermedio" },
-    { id: "2", nombre: "Yoga para Flexibilidad", duracion: "60 min", nivel: "Avanzado" },
-    { id: "3", nombre: "Full Body Express", duracion: "20 min", nivel: "Principiante" },
-  ];
+  const navigation = useNavigation();
+  const [customRoutines, setCustomRoutines] = useState([]);
 
-  const renderRutina = ({ item }) => (
-    <View style={styles.card}>
-      <Text style={styles.cardTitle}>{item.nombre}</Text>
-      <Text style={styles.cardText}>
-        Duración: {item.duracion} | Nivel: {item.nivel}
-      </Text>
-      <TouchableOpacity style={styles.button}>
-        <Text style={styles.buttonText}>Ver Rutina</Text>
-      </TouchableOpacity>
+  useEffect(() => {
+    fetchUserRoutines();
+  }, []);
+
+  // 🔄 Cargar rutinas personalizadas del usuario
+  const fetchUserRoutines = async () => {
+    try {
+      const user = auth.currentUser;
+      if (!user) return;
+
+      const q = query(collection(db, "rutinas"), where("userId", "==", user.uid));
+      const querySnapshot = await getDocs(q);
+
+      const routines = querySnapshot.docs.map((doc) => ({
+        id: doc.id,
+        ...doc.data(),
+      }));
+
+      setCustomRoutines(routines);
+    } catch (error) {
+      console.error("❌ Error al obtener rutinas personalizadas:", error);
+    }
+  };
+
+  // ➕ Crear rutina personalizada (simplificada)
+  const handleAddRoutine = async () => {
+    try {
+      const user = auth.currentUser;
+      if (!user) return;
+
+      const newRoutine = {
+        userId: user.uid,
+        name: `Mi rutina ${customRoutines.length + 1}`,
+        createdAt: new Date(),
+      };
+
+      await addDoc(collection(db, "rutinas"), newRoutine);
+      fetchUserRoutines();
+    } catch (error) {
+      console.error("❌ Error al crear rutina:", error);
+    }
+  };
+
+  const handlePress = (muscle) => {
+    // 🔗 Lleva a EjerciciosScreen para mostrar ejercicios desde ExerciseDB
+    navigation.navigate("EjerciciosScreen", { muscle });
+  };
+
+  const renderPredefinedItem = ({ item }) => (
+    <TouchableOpacity
+      style={[styles.card, { backgroundColor: item.color }]}
+      onPress={() => handlePress(item.key)}
+    >
+      <Image source={item.image} style={styles.image} resizeMode="contain" />
+      <Text style={styles.text}>{item.name.toUpperCase()}</Text>
+    </TouchableOpacity>
+  );
+
+  const renderCustomItem = ({ item }) => (
+    <View style={styles.customCard}>
+      <Text style={styles.customText}>{item.name}</Text>
     </View>
   );
-  
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>Rutinas Disponibles 🏋️</Text>
+    <ScrollView style={styles.container}>
+      {/* Sección de rutinas predefinidas */}
+      <Text style={styles.title}>ZONA PRINCIPAL</Text>
       <FlatList
-        data={rutinas}
-        renderItem={renderRutina}
+        data={predefinedRoutines}
+        renderItem={renderPredefinedItem}
         keyExtractor={(item) => item.id}
-        contentContainerStyle={{ paddingBottom: 100 }}
+        numColumns={2}
+        scrollEnabled={false}
+        contentContainerStyle={styles.grid}
       />
-    </View>
+
+      {/* Sección de rutinas personalizadas */}
+      <View style={styles.customSection}>
+        <Text style={styles.subtitle}>Mis Rutinas</Text>
+        {customRoutines.length === 0 ? (
+          <Text style={styles.noRoutinesText}>No tienes rutinas aún.</Text>
+        ) : (
+          <FlatList
+            data={customRoutines}
+            renderItem={renderCustomItem}
+            keyExtractor={(item) => item.id}
+            scrollEnabled={false}
+          />
+        )}
+
+        <TouchableOpacity style={styles.addButton} onPress={handleAddRoutine}>
+          <Ionicons name="add-circle" size={28} color="#fff" />
+          <Text style={styles.addButtonText}>Crear nueva rutina</Text>
+        </TouchableOpacity>
+      </View>
+    </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, padding: 20 },
-  title: { fontSize: 22, fontWeight: "bold", marginBottom: 20, color: "#1f2937" },
-  card: {
-    backgroundColor: "#fff",
-    padding: 16,
-    borderRadius: 12,
-    marginBottom: 15,
-    borderLeftWidth: 4,
-    borderLeftColor: "#16a34a",
-    shadowColor: "#000",
-    shadowOpacity: 0.05,
-    shadowRadius: 4,
-    elevation: 2,
+  container: {
+    flex: 1,
+    backgroundColor: "#101820",
   },
-  cardTitle: { fontSize: 18, fontWeight: "bold", color: "#111827", marginBottom: 4 },
-  cardText: { color: "#6b7280", marginBottom: 12 },
-  button: {
-    backgroundColor: "#16a34a",
-    paddingVertical: 10,
-    borderRadius: 8,
+  title: {
+    fontSize: 26,
+    fontWeight: "bold",
+    color: "#fff",
+    marginVertical: 20,
+    textAlign: "center",
+  },
+  grid: {
     alignItems: "center",
+    marginBottom: 30,
   },
-  buttonText: { color: "#fff", fontWeight: "bold" },
+  card: {
+    width: screenWidth / 2.3,
+    height: 150,
+    borderRadius: 15,
+    margin: 8,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  image: {
+    width: 80,
+    height: 80,
+    marginBottom: 8,
+  },
+  text: {
+    color: "#fff",
+    fontWeight: "bold",
+    fontSize: 14,
+  },
+  customSection: {
+    paddingHorizontal: 20,
+  },
+  subtitle: {
+    color: "#fff",
+    fontSize: 20,
+    fontWeight: "bold",
+    marginBottom: 10,
+  },
+  noRoutinesText: {
+    color: "#aaa",
+    marginBottom: 10,
+  },
+  customCard: {
+    backgroundColor: "#1e293b",
+    padding: 15,
+    borderRadius: 10,
+    marginBottom: 8,
+  },
+  customText: {
+    color: "#fff",
+    fontSize: 16,
+  },
+  addButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#16a34a",
+    padding: 12,
+    borderRadius: 10,
+    justifyContent: "center",
+    marginTop: 15,
+  },
+  addButtonText: {
+    color: "#fff",
+    marginLeft: 8,
+    fontWeight: "bold",
+  },
 });

@@ -18,11 +18,6 @@ export default function Navbar({ activeTab, setActiveTab }) {
         <Text style={activeTab === "desafios" ? styles.activeText : styles.text}>Desafíos</Text>
       </TouchableOpacity>
 
-      <TouchableOpacity onPress={() => setActiveTab("alertas")} style={styles.item}>
-        <MaterialIcons name="notifications-active" size={22} color={activeTab === "alertas" ? GREEN : "#9ca3af"} />
-        <Text style={activeTab === "alertas" ? styles.activeText : styles.text}>Alertas</Text>
-      </TouchableOpacity>
-
       <TouchableOpacity onPress={() => setActiveTab("perfil")} style={styles.item}>
         <FontAwesome5 name="user" size={20} color={activeTab === "perfil" ? GREEN : "#9ca3af"} />
         <Text style={activeTab === "perfil" ? styles.activeText : styles.text}>Perfil</Text>
@@ -40,7 +35,20 @@ const styles = StyleSheet.create({
     borderTopColor: "#e5e7eb",
     paddingVertical: 10,
   },
-  item: { alignItems: "center" },
-  text: { fontSize: 12, color: "#9ca3af", marginTop: 4 },
-  activeText: { fontSize: 12, fontWeight: "bold", color: GREEN, marginTop: 4 },
+  item: { 
+    alignItems: "center" 
+  },
+
+  text: { 
+    fontSize: 12, 
+    color: "#9ca3af", 
+    marginTop: 4 
+  },
+
+  activeText: { 
+    fontSize: 12, 
+    fontWeight: "bold", 
+    color: GREEN, 
+    marginTop: 4 
+  },
 });

@@ -1,68 +1,85 @@
-import React, { useState, createContext } from "react";
+import React, { useState, createContext, useEffect } from "react";
 import { View, SafeAreaView, StyleSheet } from "react-native";
 import { NavigationContainer } from "@react-navigation/native";
 import { createStackNavigator } from "@react-navigation/stack";
+import { doc, getDoc, updateDoc, setDoc } from "firebase/firestore";
+import { onAuthStateChanged } from "firebase/auth";
+import { db, auth } from "./firebaseConfig"; // 👈 importa Firebase
 
+import EjerciciosScreen from "./screens/EjerciciosScreen";
 import ObjetivoScreen from "./screens/ObjetivoScreen";
 import WelcomeScreen from "./screens/WelcomeScreen";
 import LoginScreen from "./screens/LoginScreen";
 import RegistroScreen from "./screens/RegistroScreen";
 import GenderScreen from "./screens/GenderScreen";
 import EdadPesoScreen from "./screens/EdadPesoScreen";
-
-import RutinasScreen from "./screens/RutinasScreen";
-import DesafiosScreen from "./screens/DesafiosScreen";
-import AlertasScreen from "./screens/AlertasScreen";
-import PerfilScreen from "./screens/PerfilScreen";
-import Navbar from "./screens/Navbar";
+import HomeTabs from "./screens/HomeTabs";
 
 
-// Crear contexto global
 export const UserContext = createContext();
-
 
 const Stack = createStackNavigator();
 const GREEN = "#16a34a";
 
-// Home con Navbar
-function HomeTabs() {
-  const [activeTab, setActiveTab] = useState("rutinas");
 
-  const renderScreen = () => {
-    switch (activeTab) {
-      case "desafios":
-        return <DesafiosScreen />;
-      case "alertas":
-        return <AlertasScreen />;
-      case "perfil":
-        return <PerfilScreen />;
-      default:
-        return <RutinasScreen />;
+
+export default function App() {
+  const [user, setUser] = useState(null);
+  const [userData, setUserData] = useState(null);
+
+  // ✅ Cargar datos del usuario cuando inicia sesión
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
+      if (currentUser) {
+        setUser(currentUser);
+        await fetchUserData(currentUser.uid);
+      } else {
+        setUser(null);
+        setUserData(null);
+      }
+    });
+    return unsubscribe;
+  }, []);
+
+  // 📥 Obtener datos del usuario desde Firestore
+  const fetchUserData = async (uid) => {
+    try {
+      const userRef = doc(db, "usuarios", uid);
+      const docSnap = await getDoc(userRef);
+
+      if (docSnap.exists()) {
+        setUserData(docSnap.data());
+      } else {
+        // Si no existe, crea uno nuevo
+        const defaultData = {
+          nombre: "Usuario Fitness",
+          nivel: "Intermedio",
+          genero: "Hombre",
+          edad: 25,
+          altura: 175,
+          peso: 70,
+          objetivo: "Tonificar",
+          notificacionesActivas: true,
+        };
+        await setDoc(userRef, defaultData);
+        setUserData(defaultData);
+      }
+    } catch (error) {
+      console.error("❌ Error al cargar datos del usuario:", error);
     }
   };
 
-  return (
-    <SafeAreaView style={styles.container}>
-      <View style={{ flex: 1 }}>{renderScreen()}</View>
-      <Navbar activeTab={activeTab} setActiveTab={setActiveTab} color={GREEN} />
-    </SafeAreaView>
-  );
-}
-
-export default function App() {
-  const [userData, setUserData] = useState({
-    nombre: "Usuario Fitness",
-    nivel: "Intermedio",
-    genero: "Hombre",
-    edad: 25,
-    altura: 175,
-    peso: 70,
-    objetivo: "Tonificar",
-    notificacionesActivas: true,
-  });
-
-  const updateUserData = (newData) => {
-    setUserData((prev) => ({ ...prev, ...newData }));
+  // 💾 Guardar cambios en Firestore
+  const updateUserData = async (newData) => {
+    try {
+      if (!user?.uid) return;
+      const userRef = doc(db, "usuarios", user.uid);
+      await updateDoc(userRef, newData);
+      setUserData((prev) => ({ ...prev, ...newData }));
+      console.log("✅ Datos actualizados en Firestore:", newData);
+    } catch (error) {
+      console.error("❌ Error al actualizar datos:", error);
+    }
   };
 
   return (
@@ -100,6 +117,13 @@ export default function App() {
            component={ObjetivoScreen}
            options={{ title: "Tu objetivo" }}
           />
+          
+          <Stack.Screen
+           name="EjerciciosScreen"
+           component={EjerciciosScreen}
+           options={{ title: "Ejercicios" }}
+          />
+
 
           <Stack.Screen
             name="Home"

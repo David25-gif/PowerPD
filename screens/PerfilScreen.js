@@ -1,16 +1,10 @@
-import React, { useContext, useState } from "react";
-import {
-  View,
-  Text,
-  StyleSheet,
-  SafeAreaView,
-  TouchableOpacity,
-  Modal,
-  TextInput,
-  ScrollView,
-} from "react-native";
+import React, { useContext, useState, useCallback } from "react";
+import { View, Text, StyleSheet, SafeAreaView, TouchableOpacity, Modal, TextInput, ScrollView, RefreshControl } from "react-native";
+import { useFocusEffect } from "@react-navigation/native";
 import { UserContext } from "../App";
 import FeatherIcon from "react-native-vector-icons/Feather";
+import { db, auth } from "../firebaseConfig";
+import { doc, getDoc } from "firebase/firestore";
 
 const GREEN = "#16a34a";
 
@@ -27,6 +21,7 @@ const ProfileItem = ({ icon, label, value }) => (
 const PerfilScreen = () => {
   const { userData, updateUserData } = useContext(UserContext);
   const [isEditing, setIsEditing] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
 
   // Estado temporal para edición
   const [formData, setFormData] = useState({ ...userData });
@@ -34,6 +29,34 @@ const PerfilScreen = () => {
   const handleChange = (field, value) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
   };
+
+  // 🔄 Función para refrescar los datos desde Firebase
+  const handleRefresh = async () => {
+    setRefreshing(true);
+    try {
+      const user = auth.currentUser;
+      if (user) {
+        const docRef = doc(db, "usuarios", user.uid);
+        const docSnap = await getDoc(docRef);
+        if (docSnap.exists()) {
+          updateUserData(docSnap.data());
+          console.log("✅ Perfil actualizado desde Firestore");
+        } else {
+          console.log("⚠️ No se encontró el documento del usuario.");
+        }
+      }
+    } catch (error) {
+      console.error("❌ Error al refrescar perfil:", error);
+    }
+    setRefreshing(false);
+  };
+
+  // 🔁 Refrescar automáticamente al entrar al perfil
+  useFocusEffect(
+    useCallback(() => {
+      handleRefresh();
+    }, [])
+  );
 
   const saveChanges = () => {
     updateUserData(formData);
@@ -52,9 +75,19 @@ const PerfilScreen = () => {
 
   return (
     <SafeAreaView style={styles.safeArea}>
-      <ScrollView contentContainerStyle={styles.container}>
+      <ScrollView
+        contentContainerStyle={styles.container}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={handleRefresh}
+            colors={[GREEN]}
+          />
+        }
+      >
         <Text style={styles.header}>Bienvenido, {userData.nombre}</Text>
 
+        {/* Tarjeta de perfil */}
         <View style={styles.card}>
           <View style={styles.profileHeader}>
             <FeatherIcon
@@ -80,6 +113,7 @@ const PerfilScreen = () => {
           </TouchableOpacity>
         </View>
 
+        {/* Datos físicos */}
         <View style={styles.card}>
           <Text style={styles.cardHeader}>Datos Físicos y Objetivos</Text>
           <ProfileItem icon="user" label="Género" value={userData.genero} />
@@ -88,6 +122,31 @@ const PerfilScreen = () => {
           <ProfileItem icon="calendar" label="Edad" value={`${userData.edad} años`} />
           <ProfileItem icon="package" label="Peso" value={`${userData.peso} kg`} />
           <ProfileItem icon="maximize" label="Altura" value={`${userData.altura} cm`} />
+        </View>
+
+        {/* 🔔 Ajustes */}
+        <View style={styles.card}>
+          <Text style={styles.cardHeader}>Ajustes</Text>
+          <View style={styles.itemRow}>
+            <View style={styles.itemContent}>
+              <FeatherIcon name="bell" size={20} color={GREEN} style={styles.itemIcon} />
+              <Text style={styles.itemLabel}>Notificaciones</Text>
+            </View>
+            <TouchableOpacity
+              onPress={() =>
+                updateUserData({
+                  ...userData,
+                  notificacionesActivas: !userData.notificacionesActivas,
+                })
+              }
+            >
+              <FeatherIcon
+                name={userData.notificacionesActivas ? "toggle-right" : "toggle-left"}
+                size={30}
+                color={userData.notificacionesActivas ? GREEN : "#ccc"}
+              />
+            </TouchableOpacity>
+          </View>
         </View>
       </ScrollView>
 
