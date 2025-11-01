@@ -6,6 +6,7 @@ import { doc, getDoc, updateDoc, setDoc } from "firebase/firestore";
 import { onAuthStateChanged } from "firebase/auth";
 import { db, auth } from "./firebaseConfig"; // 👈 importa Firebase
 
+import RutinasScreen from "./screens/RutinasScreen";
 import EjerciciosScreen from "./screens/EjerciciosScreen";
 import ObjetivoScreen from "./screens/ObjetivoScreen";
 import WelcomeScreen from "./screens/WelcomeScreen";
@@ -118,6 +119,11 @@ export default function App() {
            options={{ title: "Tu objetivo" }}
           />
           
+          <Stack.Screen
+           name="RutinasScreen"
+           component={RutinasScreen}
+           options={{ title: "Rutinas" }}
+          />
           <Stack.Screen
            name="EjerciciosScreen"
            component={EjerciciosScreen}
