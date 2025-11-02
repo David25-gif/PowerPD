@@ -9,20 +9,32 @@ const headers = {
   "X-RapidAPI-Host": API_HOST,
 };
 
-// 🏋️ Obtener todas las categorías de partes del cuerpo
 export const getBodyParts = async () => {
   try {
-    const response = await fetch(`${BASE_URL}/exercises/bodyPartList`, {
+    const url = `${BASE_URL}/exercises/bodyPartList`;
+    console.log("📡 Solicitando partes del cuerpo desde:", url);
+
+    const response = await fetch(url, {
       method: "GET",
       headers,
     });
-    if (!response.ok) throw new Error("Error al obtener las partes del cuerpo");
-    return await response.json();
+
+    const text = await response.text(); // 👈 leemos el texto crudo
+    console.log("🧾 Respuesta cruda de la API:", text);
+
+    if (!response.ok) {
+      throw new Error(`Error HTTP ${response.status}: ${text}`);
+    }
+
+    const data = JSON.parse(text);
+    console.log("✅ Partes del cuerpo obtenidas:", data);
+    return data;
   } catch (error) {
     console.error("❌ Error en getBodyParts:", error);
     return [];
   }
 };
+
 
 // 💪 Obtener ejercicios por parte del cuerpo
 export const getExercisesByBodyPart = async (bodyPart) => {

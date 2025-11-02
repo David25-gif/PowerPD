@@ -2,36 +2,22 @@ import React, { useEffect, useState } from "react";
 import {
   View,
   Text,
+  FlatList,
   Image,
   StyleSheet,
-  ScrollView,
   ActivityIndicator,
-  TouchableOpacity,
-  Linking,
 } from "react-native";
-import { getExercisesByBodyPart } from "../services/exerciseApi"; // ✅ usa tu API
-import { Ionicons } from "@expo/vector-icons";
+import { getExercisesByBodyPart } from "../services/exerciseApi";
 
-export default function EjerciciosScreen({ route }) {
-  const { muscle } = route.params; // 💪 parte del cuerpo seleccionada
+const EjerciciosScreen = ({ route }) => {
+  const { bodyPart } = route.params; // viene desde RutinasScreen
   const [exercises, setExercises] = useState([]);
   const [loading, setLoading] = useState(true);
-
-  // 🧠 Mapeo visual para mostrar títulos más bonitos
-  const muscleNames = {
-    chest: "Pecho",
-    back: "Espalda",
-    "upper legs": "Piernas",
-    "lower legs": "Piernas Inferiores",
-    "upper arms": "Brazos",
-    "lower arms": "Antebrazos",
-    waist: "Abdominales",
-  };
 
   useEffect(() => {
     const fetchExercises = async () => {
       try {
-        const data = await getExercisesByBodyPart(muscle);
+        const data = await getExercisesByBodyPart(bodyPart);
         setExercises(data);
       } catch (error) {
         console.error("❌ Error al obtener ejercicios:", error);
@@ -39,116 +25,101 @@ export default function EjerciciosScreen({ route }) {
         setLoading(false);
       }
     };
+
     fetchExercises();
-  }, [muscle]);
+  }, [bodyPart]);
 
   if (loading) {
     return (
       <View style={styles.loadingContainer}>
         <ActivityIndicator size="large" color="#16a34a" />
-        <Text style={{ color: "#fff", marginTop: 10 }}>
-          Cargando ejercicios de {muscleNames[muscle] || muscle}...
+        <Text style={{ color: "white", marginTop: 10 }}>Cargando ejercicios...</Text>
+      </View>
+    );
+  }
+
+  if (!exercises.length) {
+    return (
+      <View style={styles.loadingContainer}>
+        <Text style={{ color: "white", fontSize: 18 }}>
+          No se encontraron ejercicios para esta zona 😢
         </Text>
       </View>
     );
   }
 
   return (
-    <ScrollView style={styles.container}>
+    <View style={styles.container}>
       <Text style={styles.title}>
-        Ejercicios para {muscleNames[muscle] || muscle}
+        Ejercicios para {bodyPart.toUpperCase()}
       </Text>
 
-      {exercises.length === 0 ? (
-        <Text style={styles.noData}>No se encontraron ejercicios 😢</Text>
-      ) : (
-        exercises.map((item, index) => (
-          <View key={index} style={styles.card}>
-            <Image
-              source={{ uri: item.gifUrl }}
-              style={styles.gif}
-              resizeMode="cover"
-            />
-            <View style={styles.cardInfo}>
-              <Text style={styles.exerciseName}>{item.name}</Text>
-              <Text style={styles.details}>
-                <Text style={{ fontWeight: "bold" }}>Equipo:</Text>{" "}
-                {item.equipment}
+      <FlatList
+        data={exercises}
+        keyExtractor={(item) => item.id.toString()}
+        renderItem={({ item }) => (
+          <View style={styles.card}>
+            <Image source={{ uri: item.gifUrl }} style={styles.image} />
+            <Text style={styles.name}>{item.name.toUpperCase()}</Text>
+            <Text style={styles.text}>🏋️ Equipo: {item.equipment}</Text>
+            <Text style={styles.text}>🔥 Músculo principal: {item.target}</Text>
+            {item.secondaryMuscles?.length > 0 && (
+              <Text style={styles.text}>
+                💪 Secundarios: {item.secondaryMuscles.join(", ")}
               </Text>
-              <Text style={styles.details}>
-                <Text style={{ fontWeight: "bold" }}>Músculo objetivo:</Text>{" "}
-                {item.target}
-              </Text>
-
-              {/* 🔗 Enlace a la animación si se desea abrir en navegador */}
-              <TouchableOpacity onPress={() => Linking.openURL(item.gifUrl)}>
-                <Text style={styles.link}>
-                  <Ionicons name="open-outline" size={16} color="#16a34a" />{" "}
-                  Ver animación
-                </Text>
-              </TouchableOpacity>
-            </View>
+            )}
           </View>
-        ))
-      )}
-    </ScrollView>
+        )}
+      />
+    </View>
   );
-}
+};
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#101820",
-    padding: 15,
-  },
-  loadingContainer: {
-    flex: 1,
-    backgroundColor: "#101820",
-    alignItems: "center",
-    justifyContent: "center",
+    backgroundColor: "#0A1520",
+    paddingHorizontal: 10,
+    paddingTop: 10,
   },
   title: {
-    color: "#fff",
-    fontSize: 26,
+    color: "white",
+    fontSize: 24,
     fontWeight: "bold",
     textAlign: "center",
-    marginVertical: 20,
+    marginVertical: 15,
   },
   card: {
-    backgroundColor: "#1e293b",
-    borderRadius: 15,
-    marginBottom: 20,
-    overflow: "hidden",
+    backgroundColor: "#14212E",
+    borderRadius: 12,
+    marginBottom: 15,
+    padding: 12,
+    alignItems: "center",
   },
-  gif: {
-    width: "100%",
-    height: 200,
-    backgroundColor: "#000",
+  image: {
+    width: 120,
+    height: 120,
+    borderRadius: 8,
+    marginBottom: 10,
   },
-  cardInfo: {
-    padding: 15,
-  },
-  exerciseName: {
+  name: {
     color: "#16a34a",
     fontSize: 18,
     fontWeight: "bold",
-    textTransform: "capitalize",
+    textAlign: "center",
     marginBottom: 6,
   },
-  details: {
-    color: "#ccc",
+  text: {
+    color: "white",
     fontSize: 14,
-    marginBottom: 4,
-  },
-  link: {
-    color: "#16a34a",
-    fontWeight: "bold",
-    marginTop: 8,
-  },
-  noData: {
-    color: "#ccc",
     textAlign: "center",
-    fontSize: 16,
-    marginTop: 40,
+  },
+  loadingContainer: {
+    flex: 1,
+    backgroundColor: "#0A1520",
+    justifyContent: "center",
+    alignItems: "center",
   },
 });
+
+export default EjerciciosScreen;

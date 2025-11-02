@@ -1,130 +1,99 @@
 // screens/RutinasScreen.js
-import React, { useState, useEffect } from "react";
-import {
-  View,
-  Text,
-  TouchableOpacity,
-  Image,
-  StyleSheet,
-  FlatList,
-  Dimensions,
-  ScrollView,
-  ActivityIndicator,
-} from "react-native";
-import { useNavigation } from "@react-navigation/native";
-import { Ionicons } from "@expo/vector-icons";
-import { getBodyParts } from "../services/exerciseApi"; // ✅ Importa la API real
+import React, { useEffect, useState } from "react";
+import { View, Text, FlatList, TouchableOpacity, Image, StyleSheet } from "react-native";
+import { getBodyParts } from "../services/exerciseApi";
 
-const screenWidth = Dimensions.get("window").width;
+const imagesMap = {
+  chest: require("../assets/pecho.png"),
+  back: require("../assets/espalda.png"),
+  "upper legs": require("../assets/piernas.png"),
+  "upper arms": require("../assets/brazos.png"),
+  waist: require("../assets/abdominales.png"),
+  cardio: require("../assets/cardio.png"),
+};
 
-export default function RutinasScreen() {
-  const navigation = useNavigation();
+// Mapeo personalizado (API → Español)
+const labelsMap = {
+  chest: "Pecho",
+  back: "Espalda",
+  "upper legs": "Piernas",
+  "upper arms": "Brazos",
+  waist: "Abdominales",
+  cardio: "Cardio",
+};
+
+// Solo queremos estas 6 categorías
+const allowedParts = ["chest", "back", "upper legs", "upper arms", "waist", "cardio"];
+
+const RutinasScreen = ({ navigation }) => {
   const [bodyParts, setBodyParts] = useState([]);
-  const [loading, setLoading] = useState(true);
 
-  // ✅ Cargar partes del cuerpo desde la API ExerciseDB
   useEffect(() => {
-    const fetchData = async () => {
+    const loadParts = async () => {
       try {
         const parts = await getBodyParts();
-        setBodyParts(parts);
+        const filtered = parts.filter((p) => allowedParts.includes(p.toLowerCase()));
+        setBodyParts(filtered);
       } catch (error) {
-        console.error("❌ Error al obtener las partes del cuerpo:", error);
-      } finally {
-        setLoading(false);
+        console.error("Error al cargar las rutinas:", error);
       }
     };
-    fetchData();
+    loadParts();
   }, []);
 
-  // 🔗 Cuando se toca una tarjeta, navega a EjerciciosScreen
-  const handlePress = (muscle) => {
-    navigation.navigate("EjerciciosScreen", { muscle });
+  const handlePress = (part) => {
+    navigation.navigate("EjerciciosScreen", { bodyPart: part });
   };
-
-  // 🧍‍♀️ Mapeo de imágenes (solo las que tú tienes)
-  const imagesMap = {
-    "chest": require("../assets/pecho.png"),
-    "back": require("../assets/espalda.png"),
-    "upper legs": require("../assets/piernas.png"),
-    "lower legs": require("../assets/piernas.png"),
-    "upper arms": require("../assets/brazos.png"),
-    "lower arms": require("../assets/brazos.png"),
-    "waist": require("../assets/abdominales.png"),
-  };
-
-  // 🎨 Si aún está cargando, mostramos indicador
-  if (loading) {
-    return (
-      <View style={[styles.container, { justifyContent: "center" }]}>
-        <ActivityIndicator size="large" color="#16a34a" />
-        <Text style={{ color: "#fff", marginTop: 10 }}>Cargando rutinas...</Text>
-      </View>
-    );
-  }
 
   return (
-    <ScrollView style={styles.container}>
+    <View style={styles.container}>
       <Text style={styles.title}>ZONA PRINCIPAL</Text>
-
       <FlatList
         data={bodyParts}
+        keyExtractor={(item) => item}
+        numColumns={2}
         renderItem={({ item }) => (
-          <TouchableOpacity
-            style={[styles.card]}
-            onPress={() => handlePress(item)}
-          >
-            <Image
-              source={imagesMap[item] || require("../assets/pecho.png")}
-              style={styles.image}
-              resizeMode="contain"
-            />
-            <Text style={styles.text}>{item.toUpperCase()}</Text>
+          <TouchableOpacity style={styles.card} onPress={() => handlePress(item)}>
+            <Image source={imagesMap[item]} style={styles.image} />
+            <Text style={styles.label}>{labelsMap[item]?.toUpperCase()}</Text>
           </TouchableOpacity>
         )}
-        keyExtractor={(item, index) => index.toString()}
-        numColumns={2}
-        scrollEnabled={false}
-        contentContainerStyle={styles.grid}
       />
-    </ScrollView>
+    </View>
   );
-}
+};
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#101820",
+    backgroundColor: "#0A1520",
+    alignItems: "center",
   },
   title: {
-    fontSize: 26,
+    color: "white",
+    fontSize: 28,
     fontWeight: "bold",
-    color: "#fff",
     marginVertical: 20,
-    textAlign: "center",
-  },
-  grid: {
-    alignItems: "center",
-    marginBottom: 30,
   },
   card: {
-    width: screenWidth / 2.3,
-    height: 150,
-    borderRadius: 15,
-    margin: 8,
+    backgroundColor: "#14212E",
+    borderRadius: 12,
+    margin: 10,
     alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: "#1e293b",
+    width: 150,
+    padding: 12,
   },
   image: {
-    width: 80,
-    height: 80,
-    marginBottom: 8,
+    width: 100,
+    height: 100,
+    borderRadius: 8,
+    marginBottom: 10,
   },
-  text: {
-    color: "#fff",
+  label: {
+    color: "white",
+    fontSize: 16,
     fontWeight: "bold",
-    fontSize: 14,
-    textAlign: "center",
   },
 });
+
+export default RutinasScreen;
