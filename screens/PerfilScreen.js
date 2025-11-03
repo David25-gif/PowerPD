@@ -157,15 +157,6 @@ const PerfilScreen = () => {
             </TouchableOpacity>
           </View>
         </View>
-
-        {/* ✅ Botón para abrir la pantalla de progreso */}
-        <TouchableOpacity
-          style={styles.progressButton}
-          onPress={() => navigation.navigate("ProgressScreen")}
-        >
-          <FeatherIcon name="activity" size={20} color="#fff" style={{ marginRight: 8 }} />
-          <Text style={styles.progressButtonText}>Ver mi progreso</Text>
-        </TouchableOpacity>
       </ScrollView>
 
       {/* Modal de edición */}

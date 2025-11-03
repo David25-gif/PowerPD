@@ -2,6 +2,7 @@ import React from "react";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import { Ionicons } from "@expo/vector-icons";
 
+
 import RutinasScreen from "./RutinasScreen";
 import DesafiosScreen from "./DesafiosScreen";
 import PerfilScreen from "./PerfilScreen";

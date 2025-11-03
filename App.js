@@ -16,7 +16,7 @@ import GenderScreen from "./screens/GenderScreen";
 import EdadPesoScreen from "./screens/EdadPesoScreen";
 import HomeTabs from "./screens/HomeTabs";
 
-import ProgressScreen from "./screens/ProgressScreen";
+
 import CronometroScreen from "./screens/CronometroScreen";
 import HistorialScreen from "./screens/HistorialScreen";
 import GraficaScreen from "./screens/GraficaScreen";
@@ -137,11 +137,7 @@ export default function App() {
            component={EjerciciosScreen}
            options={{ title: "Ejercicios" }}
           />
-          <Stack.Screen
-            name="ProgressScreen"
-            component={ProgressScreen}
-            options={{ title: "Tu progreso" }}
-          />
+        
           <Stack.Screen
             name="Home"
             component={HomeTabs}

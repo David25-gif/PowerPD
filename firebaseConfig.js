@@ -9,7 +9,7 @@ const firebaseConfig = {
   authDomain: "powerpd.firebaseapp.com",
   projectId: "powerpd",
   
-  storageBucket: "powerpd.appspot.com", // ✅ Esta es la forma correcta
+  storageBucket: "powerpd.appspot.com", 
   messagingSenderId: "163160749521",
   appId: "1:163160749521:web:916173501f6f867d581cf0",
   measurementId: "G-CJM66TGPY2",
