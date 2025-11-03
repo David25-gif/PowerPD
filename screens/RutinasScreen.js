@@ -1,8 +1,15 @@
-// screens/RutinasScreen.js
 import React, { useEffect, useState } from "react";
-import { View, Text, FlatList, TouchableOpacity, Image, StyleSheet } from "react-native";
+import {
+  View,
+  Text,
+  FlatList,
+  TouchableOpacity,
+  Image,
+  StyleSheet,
+} from "react-native";
 import { getBodyParts } from "../services/exerciseApi";
 
+// 🖼️ Mapeo de imágenes locales — claves en INGLÉS (coinciden con `original`)
 const imagesMap = {
   chest: require("../assets/pecho.png"),
   back: require("../assets/espalda.png"),
@@ -12,18 +19,25 @@ const imagesMap = {
   cardio: require("../assets/cardio.png"),
 };
 
-// Mapeo personalizado (API → Español)
+// 🇪🇸 Traducción fija para las zonas que queremos mostrar
 const labelsMap = {
-  chest: "Pecho",
   back: "Espalda",
+  cardio: "Cardio",
+  chest: "Pecho",
   "upper legs": "Piernas",
   "upper arms": "Brazos",
   waist: "Abdominales",
-  cardio: "Cardio",
 };
 
-// Solo queremos estas 6 categorías
-const allowedParts = ["chest", "back", "upper legs", "upper arms", "waist", "cardio"];
+// 🔥 Solo las zonas principales que queremos mostrar
+const allowedParts = [
+  "back",
+  "cardio",
+  "chest",
+  "upper legs",
+  "upper arms",
+  "waist",
+];
 
 const RutinasScreen = ({ navigation }) => {
   const [bodyParts, setBodyParts] = useState([]);
@@ -32,10 +46,20 @@ const RutinasScreen = ({ navigation }) => {
     const loadParts = async () => {
       try {
         const parts = await getBodyParts();
-        const filtered = parts.filter((p) => allowedParts.includes(p.toLowerCase()));
+        console.log("📦 Partes del cuerpo devueltas por API:", parts);
+
+        // ⚙️ Filtramos solo las partes que queremos (por `original`)
+        const filtered = parts
+          .filter((p) => allowedParts.includes(p.original))
+          .map((p) => ({
+            original: p.original,
+            translated: labelsMap[p.original] || p.translated,
+          }));
+
+        console.log("✅ Partes del cuerpo filtradas:", filtered);
         setBodyParts(filtered);
       } catch (error) {
-        console.error("Error al cargar las rutinas:", error);
+        console.error("❌ Error al cargar las rutinas:", error);
       }
     };
     loadParts();
@@ -48,14 +72,22 @@ const RutinasScreen = ({ navigation }) => {
   return (
     <View style={styles.container}>
       <Text style={styles.title}>ZONA PRINCIPAL</Text>
+
       <FlatList
         data={bodyParts}
-        keyExtractor={(item) => item}
+        keyExtractor={(item) => item.original}
         numColumns={2}
         renderItem={({ item }) => (
-          <TouchableOpacity style={styles.card} onPress={() => handlePress(item)}>
-            <Image source={imagesMap[item]} style={styles.image} />
-            <Text style={styles.label}>{labelsMap[item]?.toUpperCase()}</Text>
+          <TouchableOpacity
+            style={styles.card}
+            onPress={() => handlePress(item.original)}
+          >
+            {imagesMap[item.original] ? (
+              <Image source={imagesMap[item.original]} style={styles.image} />
+            ) : (
+              <Text style={{ color: "white" }}>Sin imagen</Text>
+            )}
+            <Text style={styles.label}>{item.translated.toUpperCase()}</Text>
           </TouchableOpacity>
         )}
       />

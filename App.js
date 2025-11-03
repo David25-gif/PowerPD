@@ -15,7 +15,14 @@ import RegistroScreen from "./screens/RegistroScreen";
 import GenderScreen from "./screens/GenderScreen";
 import EdadPesoScreen from "./screens/EdadPesoScreen";
 import HomeTabs from "./screens/HomeTabs";
+
 import ProgressScreen from "./screens/ProgressScreen";
+import CronometroScreen from "./screens/CronometroScreen";
+import HistorialScreen from "./screens/HistorialScreen";
+import GraficaScreen from "./screens/GraficaScreen";
+import CalendarioScreen from "./screens/CalendarioScreen";
+import ProgresoScreen from "./screens/ProgresoScreen";
+
 
 
 export const UserContext = createContext();
@@ -140,6 +147,27 @@ export default function App() {
             component={HomeTabs}
             options={{ headerShown: false }}
           />
+
+          <Stack.Screen
+           name="Cronometro" 
+           component={CronometroScreen}
+          />
+
+          <Stack.Screen 
+           name="Historial" 
+           component={HistorialScreen} 
+           
+          />
+          <Stack.Screen
+           name="Grafica"
+           component={GraficaScreen} 
+          />
+
+          <Stack.Screen
+           name="Calendario" 
+           component={CalendarioScreen}
+          />          
+          
         </Stack.Navigator>
       </NavigationContainer>
     </UserContext.Provider>

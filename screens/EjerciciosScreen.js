@@ -1,195 +1,218 @@
-// screens/EjerciciosScreen.js
 import React, { useEffect, useState } from "react";
-import {
-  View,
-  Text,
-  FlatList,
-  StyleSheet,
-  ActivityIndicator,
-  ScrollView,
-} from "react-native";
-import { getExercisesByBodyPart } from "../services/exerciseApi";
+import { View, Text, FlatList, Image, TouchableOpacity, StyleSheet, ActivityIndicator } from "react-native";
+import { getBodyParts, getExercisesByBodyPart } from "../services/exerciseApi";
 
-const EjerciciosScreen = ({ route }) => {
-  const { bodyPart } = route.params;
+const EjerciciosScreen = () => {
+  const [bodyParts, setBodyParts] = useState([]);
+  const [selectedPart, setSelectedPart] = useState(null);
   const [exercises, setExercises] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
 
+  // 🔹 Cargar las partes del cuerpo al iniciar
   useEffect(() => {
-    const fetchExercises = async () => {
+    const fetchParts = async () => {
       try {
-        const data = await getExercisesByBodyPart(bodyPart);
-        console.log("✅ Datos obtenidos:", data.slice(0, 2)); // muestra solo los primeros 2
-        setExercises(data);
-      } catch (error) {
-        console.error("❌ Error al obtener ejercicios:", error);
-      } finally {
-        setLoading(false);
+        const parts = await getBodyParts();
+        setBodyParts(parts);
+      } catch (err) {
+        console.error("Error cargando partes del cuerpo:", err);
       }
     };
+    fetchParts();
+  }, []);
 
-    fetchExercises();
-  }, [bodyPart]);
-
-  // 🕒 Calcula el tiempo de descanso según dificultad
-  const getRestTime = (difficulty) => {
-    switch (difficulty?.toLowerCase()) {
-      case "beginner":
-        return "30–45 segundos";
-      case "intermediate":
-        return "45–90 segundos";
-      case "expert":
-      case "advanced":
-        return "90–120 segundos";
-      default:
-        return "60 segundos";
+  // 🔹 Cargar los ejercicios cuando se selecciona una parte
+  const handleSelectPart = async (part) => {
+    try {
+      setSelectedPart(part);
+      setLoading(true);
+      const data = await getExercisesByBodyPart(part.original);
+      setExercises(data);
+    } catch (err) {
+      console.error("Error cargando ejercicios:", err);
+    } finally {
+      setLoading(false);
     }
   };
 
-  if (loading) {
-    return (
-      <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color="#16a34a" />
-        <Text style={{ color: "white", marginTop: 10 }}>
-          Cargando ejercicios...
-        </Text>
-      </View>
-    );
-  }
+  // 🔹 Render de cada parte del cuerpo
+  const renderBodyPart = ({ item }) => (
+    <TouchableOpacity
+      style={[
+        styles.bodyPartButton,
+        selectedPart?.original === item.original && styles.selectedButton,
+      ]}
+      onPress={() => handleSelectPart(item)}
+    >
+      <Text style={styles.bodyPartText}>{item.translated}</Text>
+    </TouchableOpacity>
+  );
 
-  if (!exercises.length) {
-    return (
-      <View style={styles.loadingContainer}>
-        <Text style={{ color: "white", fontSize: 18 }}>
-          No se encontraron ejercicios para esta zona 😢
+  // 🔹 Render de cada ejercicio
+  const renderExercise = ({ item }) => (
+    <View style={styles.exerciseCard}>
+      <Image
+        source={{ uri: item.gifUrl }}
+        style={styles.exerciseImage}
+        resizeMode="cover"
+      />
+      <View style={styles.exerciseInfo}>
+        <Text style={styles.exerciseName}>{item.name}</Text>
+        <Text style={styles.exerciseDetail}>
+          🎯 <Text style={styles.label}>Objetivo:</Text> {item.target}
         </Text>
+        <Text style={styles.exerciseDetail}>
+          🦾 <Text style={styles.label}>Equipo:</Text> {item.equipment}
+        </Text>
+        <Text style={styles.exerciseDetail}>
+          💪 <Text style={styles.label}>Parte del cuerpo:</Text> {item.bodyPart}
+        </Text>
+
+        {item.instructions && item.instructions.length > 0 && (
+          <View style={styles.instructionsContainer}>
+            <Text style={styles.label}>📋 Instrucciones:</Text>
+            {item.instructions.map((step, index) => (
+              <Text key={index} style={styles.instructionStep}>
+                • {step}
+              </Text>
+            ))}
+          </View>
+        )}
       </View>
-    );
-  }
+    </View>
+  );
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>
-        Ejercicios para {bodyPart.toUpperCase()}
-      </Text>
+      <Text style={styles.title}>Selecciona una zona del cuerpo</Text>
 
-      <FlatList
-        data={exercises}
-        keyExtractor={(item) => item.id?.toString() || Math.random().toString()}
-        renderItem={({ item }) => (
-          <View style={styles.card}>
-            <Text style={styles.name}>{item.name?.toUpperCase()}</Text>
+      {bodyParts.length === 0 ? (
+        <ActivityIndicator size="large" color="#f97316" style={{ marginTop: 40 }} />
+      ) : (
+        <FlatList
+          data={bodyParts}
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          keyExtractor={(item) => item.original}
+          renderItem={renderBodyPart}
+          contentContainerStyle={styles.bodyPartList}
+        />
+      )}
 
-            {item.description && (
-              <Text style={styles.text}>📖 {item.description}</Text>
-            )}
+      <View style={styles.separator} />
 
-            <Text style={styles.text}>
-              🧠 Dificultad:{" "}
-              <Text style={styles.highlight}>
-                {item.difficulty || "No especificada"}
-              </Text>
-            </Text>
-
-            <Text style={styles.text}>
-              🏋️ Equipo:{" "}
-              <Text style={styles.highlight}>
-                {item.equipment || "Ninguno"}
-              </Text>
-            </Text>
-
-            <Text style={styles.text}>
-              🔥 Músculo principal:{" "}
-              <Text style={styles.highlight}>
-                {item.target || "Desconocido"}
-              </Text>
-            </Text>
-
-            {item.secondaryMuscles?.length > 0 && (
-              <Text style={styles.text}>
-                💪 Secundarios: {item.secondaryMuscles.join(", ")}
-              </Text>
-            )}
-
-            <Text style={styles.text}>
-              ⏱️ Descanso sugerido: {getRestTime(item.difficulty)}
-            </Text>
-
-            {item.instructions && (
-              <View style={styles.instructionsBox}>
-                <Text style={styles.instructionsTitle}>📝 Instrucciones:</Text>
-                {item.instructions.map((step, index) => (
-                  <Text key={index} style={styles.instructionStep}>
-                    {index + 1}. {step}
-                  </Text>
-                ))}
-              </View>
-            )}
-          </View>
-        )}
-      />
+      {loading ? (
+        <ActivityIndicator size="large" color="#f97316" style={{ marginTop: 20 }} />
+      ) : selectedPart ? (
+        exercises.length > 0 ? (
+          <FlatList
+            data={exercises}
+            keyExtractor={(item) => item.id}
+            renderItem={renderExercise}
+            contentContainerStyle={styles.exerciseList}
+          />
+        ) : (
+          <Text style={styles.noExercises}>No se encontraron ejercicios para esta zona.</Text>
+        )
+      ) : (
+        <Text style={styles.helperText}>Selecciona una parte del cuerpo para ver ejercicios</Text>
+      )}
     </View>
   );
 };
 
+export default EjerciciosScreen;
+
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#0A1520",
-    paddingHorizontal: 10,
-    paddingTop: 10,
+    backgroundColor: "#fff",
+    paddingTop: 50,
+    paddingHorizontal: 16,
   },
   title: {
-    color: "white",
-    fontSize: 24,
+    fontSize: 22,
     fontWeight: "bold",
+    marginBottom: 12,
+    color: "#f97316",
     textAlign: "center",
+  },
+  bodyPartList: {
+    paddingVertical: 10,
+  },
+  bodyPartButton: {
+    backgroundColor: "#e5e7eb",
+    paddingVertical: 10,
+    paddingHorizontal: 18,
+    borderRadius: 20,
+    marginHorizontal: 5,
+  },
+  selectedButton: {
+    backgroundColor: "#f97316",
+  },
+  bodyPartText: {
+    color: "#111827",
+    fontWeight: "bold",
+  },
+  separator: {
+    height: 1,
+    backgroundColor: "#ddd",
     marginVertical: 15,
   },
-  card: {
-    backgroundColor: "#14212E",
+  exerciseList: {
+    paddingBottom: 80,
+  },
+  exerciseCard: {
+    flexDirection: "row",
+    backgroundColor: "#f9fafb",
     borderRadius: 12,
-    marginBottom: 20,
-    padding: 15,
+    marginBottom: 15,
+    elevation: 3,
+    shadowColor: "#000",
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    shadowOffset: { width: 0, height: 2 },
   },
-  name: {
-    color: "#16a34a",
-    fontSize: 18,
-    fontWeight: "bold",
-    textAlign: "center",
-    marginBottom: 10,
+  exerciseImage: {
+    width: 120,
+    height: 120,
+    borderTopLeftRadius: 12,
+    borderBottomLeftRadius: 12,
   },
-  text: {
-    color: "white",
-    fontSize: 14,
-    marginBottom: 5,
-  },
-  highlight: {
-    color: "#16a34a",
-    fontWeight: "bold",
-  },
-  instructionsBox: {
-    marginTop: 10,
-    backgroundColor: "#0A1B2A",
-    borderRadius: 10,
+  exerciseInfo: {
+    flex: 1,
     padding: 10,
   },
-  instructionsTitle: {
-    color: "#16a34a",
+  exerciseName: {
+    fontSize: 16,
     fontWeight: "bold",
-    marginBottom: 5,
+    color: "#111827",
+    marginBottom: 4,
+  },
+  exerciseDetail: {
+    fontSize: 14,
+    color: "#4b5563",
+  },
+  label: {
+    fontWeight: "600",
+    color: "#f97316",
+  },
+  instructionsContainer: {
+    marginTop: 6,
   },
   instructionStep: {
-    color: "white",
     fontSize: 13,
-    marginBottom: 3,
+    color: "#374151",
+    marginLeft: 10,
   },
-  loadingContainer: {
-    flex: 1,
-    backgroundColor: "#0A1520",
-    justifyContent: "center",
-    alignItems: "center",
+  noExercises: {
+    textAlign: "center",
+    color: "#6b7280",
+    marginTop: 20,
+  },
+  helperText: {
+    textAlign: "center",
+    color: "#6b7280",
+    marginTop: 20,
   },
 });
-
-export default EjerciciosScreen;
