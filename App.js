@@ -15,6 +15,7 @@ import RegistroScreen from "./screens/RegistroScreen";
 import GenderScreen from "./screens/GenderScreen";
 import EdadPesoScreen from "./screens/EdadPesoScreen";
 import HomeTabs from "./screens/HomeTabs";
+import ProgressScreen from "./screens/ProgressScreen";
 
 
 export const UserContext = createContext();
@@ -129,8 +130,11 @@ export default function App() {
            component={EjerciciosScreen}
            options={{ title: "Ejercicios" }}
           />
-
-
+          <Stack.Screen
+            name="ProgressScreen"
+            component={ProgressScreen}
+            options={{ title: "Tu progreso" }}
+          />
           <Stack.Screen
             name="Home"
             component={HomeTabs}

@@ -1,6 +1,16 @@
 import React, { useContext, useState, useCallback } from "react";
-import { View, Text, StyleSheet, SafeAreaView, TouchableOpacity, Modal, TextInput, ScrollView, RefreshControl } from "react-native";
-import { useFocusEffect } from "@react-navigation/native";
+import {
+  View,
+  Text,
+  StyleSheet,
+  SafeAreaView,
+  TouchableOpacity,
+  Modal,
+  TextInput,
+  ScrollView,
+  RefreshControl,
+} from "react-native";
+import { useFocusEffect, useNavigation } from "@react-navigation/native";
 import { UserContext } from "../App";
 import FeatherIcon from "react-native-vector-icons/Feather";
 import { db, auth } from "../firebaseConfig";
@@ -22,6 +32,7 @@ const PerfilScreen = () => {
   const { userData, updateUserData } = useContext(UserContext);
   const [isEditing, setIsEditing] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
+  const navigation = useNavigation();
 
   // Estado temporal para edición
   const [formData, setFormData] = useState({ ...userData });
@@ -66,9 +77,7 @@ const PerfilScreen = () => {
   if (!userData) {
     return (
       <SafeAreaView style={styles.safeArea}>
-        <Text style={{ textAlign: "center", marginTop: 50 }}>
-          Cargando perfil...
-        </Text>
+        <Text style={{ textAlign: "center", marginTop: 50 }}>Cargando perfil...</Text>
       </SafeAreaView>
     );
   }
@@ -148,6 +157,15 @@ const PerfilScreen = () => {
             </TouchableOpacity>
           </View>
         </View>
+
+        {/* ✅ Botón para abrir la pantalla de progreso */}
+        <TouchableOpacity
+          style={styles.progressButton}
+          onPress={() => navigation.navigate("ProgressScreen")}
+        >
+          <FeatherIcon name="activity" size={20} color="#fff" style={{ marginRight: 8 }} />
+          <Text style={styles.progressButtonText}>Ver mi progreso</Text>
+        </TouchableOpacity>
       </ScrollView>
 
       {/* Modal de edición */}
@@ -279,6 +297,21 @@ const styles = StyleSheet.create({
   itemIcon: { marginRight: 10, width: 20 },
   itemLabel: { fontSize: 16, color: "#444" },
   itemValue: { fontSize: 16, fontWeight: "500", color: "#666" },
+  progressButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: GREEN,
+    padding: 15,
+    borderRadius: 12,
+    marginBottom: 50,
+    marginHorizontal: 20,
+  },
+  progressButtonText: {
+    color: "#fff",
+    fontSize: 16,
+    fontWeight: "bold",
+  },
   modalOverlay: {
     flex: 1,
     justifyContent: "center",
