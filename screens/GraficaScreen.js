@@ -1,65 +1,191 @@
-// screens/GraficaScreen.js
 import React, { useEffect, useState } from "react";
-import { View, Text, Dimensions, StyleSheet } from "react-native";
-import { LineChart } from "react-native-chart-kit";
-import { auth, db } from "../firebaseConfig";
+import { View, Text, Dimensions, ScrollView } from "react-native";
+import { BarChart } from "react-native-chart-kit";
+import { db } from "../firebaseConfig";
 import { doc, getDoc } from "firebase/firestore";
 
 const screenWidth = Dimensions.get("window").width;
 
-export default function GraficaScreen() {
-  const [labels, setLabels] = useState([]);
-  const [data, setData] = useState([]);
+export default function GraficaScreen({ route }) {
+  // Si pasas el usuario desde navegación: const { userId } = route.params;
+  const userId = "user123"; // temporal, reemplázalo luego con el user real
+
+  const [data, setData] = useState(null);
+  const [totalCalorias, setTotalCalorias] = useState(0);
+  const [totalTiempo, setTotalTiempo] = useState(0);
+  const [totalSesiones, setTotalSesiones] = useState(0);
 
   useEffect(() => {
-    const cargarDatos = async () => {
-      const user = auth.currentUser;
-      if (!user) return;
+    const fetchData = async () => {
+      try {
+        const userDocRef = doc(db, "usuarios", userId);
+        const userDocSnap = await getDoc(userDocRef);
 
-      const ref = doc(db, "usuarios", user.uid);
-      const snap = await getDoc(ref);
-      if (snap.exists()) {
-        const tiempos = snap.data().tiempos || {};
-        const fechas = Object.keys(tiempos).sort();
-        setLabels(fechas);
-        setData(fechas.map((f) => tiempos[f]));
+        if (userDocSnap.exists()) {
+          const entrenamientos = userDocSnap.data().entrenamientos || [];
+
+          const caloriasPorDia = {};
+          let totalCal = 0;
+          let totalDuracion = 0;
+
+          entrenamientos.forEach((ent) => {
+            const fecha = ent.fecha || "Sin fecha";
+            caloriasPorDia[fecha] =
+              (caloriasPorDia[fecha] || 0) + (ent.calorias || 0);
+            totalCal += ent.calorias || 0;
+
+            // Convertir duración "00:02:05" a segundos
+            if (ent.duracion) {
+              const [h, m, s] = ent.duracion.split(":").map(Number);
+              totalDuracion += h * 3600 + m * 60 + s;
+            }
+          });
+
+          const labels = Object.keys(caloriasPorDia);
+          const values = Object.values(caloriasPorDia);
+
+          setData({
+            labels,
+            datasets: [{ data: values }],
+          });
+
+          setTotalCalorias(totalCal);
+          setTotalTiempo(totalDuracion);
+          setTotalSesiones(entrenamientos.length);
+        } else {
+          console.log("No existe el usuario en Firestore");
+        }
+      } catch (error) {
+        console.error("Error al cargar los datos:", error);
       }
     };
-    cargarDatos();
+
+    fetchData();
   }, []);
 
+  const tiempoEnMinutos = (totalTiempo / 60).toFixed(1);
+
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>📈 Progreso de Entrenamiento</Text>
-      {data.length > 0 ? (
-        <LineChart
-          data={{
-            labels,
-            datasets: [{ data }],
-          }}
-          width={screenWidth - 30}
+    <ScrollView
+      style={{
+        flex: 1,
+        backgroundColor: "#0d1117",
+        paddingHorizontal: 10,
+      }}
+    >
+      <Text
+        style={{
+          textAlign: "center",
+          color: "#00ff6a",
+          fontSize: 22,
+          fontWeight: "bold",
+          marginTop: 20,
+        }}
+      >
+        📊 Tu Progreso Semanal
+      </Text>
+
+      {data && data.labels && data.labels.length > 0 ? (
+        <BarChart
+          data={data}
+          width={screenWidth - 20}
           height={250}
-          yAxisSuffix="s"
+          fromZero
+          showValuesOnTopOfBars
+          yAxisLabel=""
           chartConfig={{
-            backgroundColor: "#111827",
-            backgroundGradientFrom: "#111827",
-            backgroundGradientTo: "#111827",
-            decimalPlaces: 0,
-            color: (opacity = 1) => `rgba(22, 163, 74, ${opacity})`,
+            backgroundGradientFrom: "#0d1117",
+            backgroundGradientTo: "#0d1117",
+            color: (opacity = 1) => `rgba(0, 255, 106, ${opacity})`,
             labelColor: (opacity = 1) => `rgba(255, 255, 255, ${opacity})`,
           }}
-          bezier
-          style={{ borderRadius: 10, marginVertical: 10 }}
+          style={{
+            marginVertical: 25,
+            borderRadius: 16,
+            alignSelf: "center",
+          }}
         />
       ) : (
-        <Text style={styles.empty}>Aún no hay datos para mostrar.</Text>
+        <Text
+          style={{
+            color: "#9ca3af",
+            textAlign: "center",
+            marginVertical: 50,
+            fontSize: 16,
+          }}
+        >
+          Aún no tienes registros de entrenamiento 🏋️‍♀️
+        </Text>
       )}
-    </View>
+
+      {/* Círculos de resumen */}
+      <View
+        style={{
+          flexDirection: "row",
+          justifyContent: "space-around",
+          marginBottom: 50,
+        }}
+      >
+        <View
+          style={{
+            backgroundColor: "#1f2937",
+            width: 100,
+            height: 100,
+            borderRadius: 50,
+            alignItems: "center",
+            justifyContent: "center",
+            shadowColor: "#00ff6a",
+            shadowOpacity: 0.3,
+            shadowRadius: 5,
+          }}
+        >
+          <Text style={{ color: "#00ff6a", fontSize: 18 }}>🔥</Text>
+          <Text style={{ color: "white", fontSize: 16, fontWeight: "bold" }}>
+            {totalCalorias}
+          </Text>
+          <Text style={{ color: "#9ca3af", fontSize: 12 }}>kcal</Text>
+        </View>
+
+        <View
+          style={{
+            backgroundColor: "#1f2937",
+            width: 100,
+            height: 100,
+            borderRadius: 50,
+            alignItems: "center",
+            justifyContent: "center",
+            shadowColor: "#00ff6a",
+            shadowOpacity: 0.3,
+            shadowRadius: 5,
+          }}
+        >
+          <Text style={{ color: "#00ff6a", fontSize: 18 }}>⏱️</Text>
+          <Text style={{ color: "white", fontSize: 16, fontWeight: "bold" }}>
+            {tiempoEnMinutos}
+          </Text>
+          <Text style={{ color: "#9ca3af", fontSize: 12 }}>min</Text>
+        </View>
+
+        <View
+          style={{
+            backgroundColor: "#1f2937",
+            width: 100,
+            height: 100,
+            borderRadius: 50,
+            alignItems: "center",
+            justifyContent: "center",
+            shadowColor: "#00ff6a",
+            shadowOpacity: 0.3,
+            shadowRadius: 5,
+          }}
+        >
+          <Text style={{ color: "#00ff6a", fontSize: 18 }}>💪</Text>
+          <Text style={{ color: "white", fontSize: 16, fontWeight: "bold" }}>
+            {totalSesiones}
+          </Text>
+          <Text style={{ color: "#9ca3af", fontSize: 12 }}>sesiones</Text>
+        </View>
+      </View>
+    </ScrollView>
   );
 }
-
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#111827", padding: 20 },
-  title: { color: "#16a34a", fontSize: 22, fontWeight: "bold", marginBottom: 20 },
-  empty: { color: "#9ca3af", textAlign: "center", fontSize: 16, marginTop: 40 },
-});
