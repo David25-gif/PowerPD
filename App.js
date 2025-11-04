@@ -143,26 +143,6 @@ export default function App() {
             component={HomeTabs}
             options={{ headerShown: false }}
           />
-
-          <Stack.Screen
-           name="Cronometro" 
-           component={CronometroScreen}
-          />
-
-          <Stack.Screen 
-           name="Historial" 
-           component={HistorialScreen} 
-           
-          />
-          <Stack.Screen
-           name="Grafica"
-           component={GraficaScreen} 
-          />
-
-          <Stack.Screen
-           name="Calendario" 
-           component={CalendarioScreen}
-          />          
           
         </Stack.Navigator>
       </NavigationContainer>

@@ -2,7 +2,7 @@ import React from "react";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import { Ionicons } from "@expo/vector-icons";
 
-
+// Pantallas principales
 import RutinasScreen from "./RutinasScreen";
 import DesafiosScreen from "./DesafiosScreen";
 import PerfilScreen from "./PerfilScreen";
@@ -27,7 +27,7 @@ export default function HomeTabs() {
           let iconName;
           if (route.name === "Rutinas") iconName = "barbell";
           else if (route.name === "Desafios") iconName = "trophy";
-          else if (route.name === "Progreso") iconName = "stats-chart"; 
+          else if (route.name === "Progreso") iconName = "stats-chart";
           else if (route.name === "Perfil") iconName = "person-circle";
           return <Ionicons name={iconName} size={size} color={color} />;
         },

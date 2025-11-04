@@ -1,63 +1,80 @@
 import React from "react";
-import { View, Text, StyleSheet, TouchableOpacity } from "react-native";
-import { Ionicons } from "@expo/vector-icons";
+import { View, Text, StyleSheet } from "react-native";
+import { createMaterialTopTabNavigator } from "@react-navigation/material-top-tabs";
 
-export default function ProgresoScreen({ navigation }) {
+// Importa tus pantallas hijas
+import HistorialScreen from "./HistorialScreen";
+import GraficaScreen from "./GraficaScreen";
+import CalendarioScreen from "./CalendarioScreen";
+import CronometroScreen from "./CronometroScreen";
+
+const Tab = createMaterialTopTabNavigator();
+
+export default function ProgresoScreen() {
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Tu Progreso 💪</Text>
+      {/* Título superior */}
+      <Text style={styles.title}>
+        Tu Progreso <Text style={styles.icon}>💪</Text>
+      </Text>
 
-
-      <TouchableOpacity style={styles.card} onPress={() => navigation.navigate("Calendario")}>
-        <Ionicons name="calendar" size={40} color="#fff" />
-        <Text style={styles.cardText}>Calendario de Entrenamiento</Text>
-      </TouchableOpacity>
-
-   
-      <TouchableOpacity style={styles.card} onPress={() => navigation.navigate("Grafica")}>
-        <Ionicons name="stats-chart" size={40} color="#fff" />
-        <Text style={styles.cardText}>Gráfica de Progreso</Text>
-      </TouchableOpacity>
-
-
-      <TouchableOpacity style={styles.card} onPress={() => navigation.navigate("Cronometro")}>
-        <Ionicons name="timer" size={40} color="#fff" />
-        <Text style={styles.cardText}>Cronómetro</Text>
-      </TouchableOpacity>
-
-   
-      <TouchableOpacity style={styles.card} onPress={() => navigation.navigate("Historial")}>
-        <Ionicons name="journal" size={40} color="#fff" />
-        <Text style={styles.cardText}>Historial de Rutinas</Text>
-      </TouchableOpacity>
+      {/* Tabs de navegación */}
+      <View style={{ flex: 1 }}>
+        <Tab.Navigator
+          screenOptions={{
+            tabBarScrollEnabled: true, // ✅ permite desplazamiento horizontal
+            tabBarIndicatorStyle: { backgroundColor: "#16a34a", height: 3 },
+            tabBarLabelStyle: {
+              fontSize: 14,
+              textTransform: "none",
+              color: "white",
+            },
+            tabBarActiveTintColor: "#16a34a",
+            tabBarInactiveTintColor: "#9ca3af",
+            tabBarStyle: { backgroundColor: "#0f172a" },
+          }}
+        >
+          <Tab.Screen
+            name="Historial"
+            component={HistorialScreen}
+            options={{ title: "Historial" }}
+          />
+          <Tab.Screen
+            name="Grafica"
+            component={GraficaScreen}
+            options={{ title: "Gráfica" }}
+          />
+          <Tab.Screen
+            name="Calendario"
+            component={CalendarioScreen}
+            options={{ title: "Calendario" }}
+          />
+          <Tab.Screen
+            name="Cronometro"
+            component={CronometroScreen}
+            options={{ title: "Cronómetro" }}
+          />
+        </Tab.Navigator>
+      </View>
     </View>
   );
 }
 
+// 💅 Estilos
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#111827",
-    padding: 20,
+    backgroundColor: "#0f172a", // Fondo oscuro
+    paddingTop: 40,
   },
   title: {
-    fontSize: 26,
+    fontSize: 22,
     fontWeight: "bold",
     color: "#16a34a",
-    marginBottom: 20,
+    textAlign: "center",
+    marginBottom: 10,
   },
-  card: {
-    backgroundColor: "#1f2937",
-    padding: 20,
-    marginVertical: 10,
-    borderRadius: 12,
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 15,
-  },
-  cardText: {
-    color: "#fff",
-    fontSize: 18,
-    fontWeight: "500",
+  icon: {
+    fontSize: 22,
   },
 });
