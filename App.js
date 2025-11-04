@@ -17,13 +17,6 @@ import EdadPesoScreen from "./screens/EdadPesoScreen";
 import HomeTabs from "./screens/HomeTabs";
 
 
-import CronometroScreen from "./screens/CronometroScreen";
-import HistorialScreen from "./screens/HistorialScreen";
-import GraficaScreen from "./screens/GraficaScreen";
-import CalendarioScreen from "./screens/CalendarioScreen";
-import ProgresoScreen from "./screens/ProgresoScreen";
-
-
 
 export const UserContext = createContext();
 

@@ -1,95 +1,341 @@
-import React, { useEffect } from "react";
-import { View, Text, TouchableOpacity, StyleSheet, Alert } from "react-native";
-import * as WebBrowser from "expo-web-browser";
-import * as Google from "expo-auth-session/providers/google";
-import { Ionicons } from "@expo/vector-icons";
-import AsyncStorage from "@react-native-async-storage/async-storage";
+import React, { useContext, useState, useCallback } from "react";
+import {
+  View,
+  Text,
+  StyleSheet,
+  SafeAreaView,
+  TouchableOpacity,
+  Modal,
+  TextInput,
+  ScrollView,
+  RefreshControl,
+} from "react-native";
+import { useFocusEffect, useNavigation } from "@react-navigation/native";
+import { UserContext } from "../App";
+import FeatherIcon from "react-native-vector-icons/Feather";
+import { db, auth } from "../firebaseConfig";
+import { doc, getDoc } from "firebase/firestore";
 
-WebBrowser.maybeCompleteAuthSession();
+const GREEN = "#16a34a";
 
-export default function LoginScreen({ navigation }) {
-  // ⚙️ Configuración del inicio de sesión con Google
-  const [request, response, promptAsync] = Google.useAuthRequest({
-    webClientId: "TU_CLIENT_ID_WEB.apps.googleusercontent.com", // <--- REEMPLAZA AQUÍ
-  });
+const ProfileItem = ({ icon, label, value }) => (
+  <View style={styles.itemRow}>
+    <View style={styles.itemContent}>
+      <FeatherIcon name={icon} size={20} color={GREEN} style={styles.itemIcon} />
+      <Text style={styles.itemLabel}>{label}</Text>
+    </View>
+    <Text style={styles.itemValue}>{value}</Text>
+  </View>
+);
 
-  // 🎯 Cuando el usuario inicia sesión correctamente
-  useEffect(() => {
-    if (response?.type === "success") {
-      const { authentication } = response;
-      fetchUserInfo(authentication.accessToken);
-    } else if (response?.type === "error") {
-      Alert.alert("Error", "No se pudo iniciar sesión con Google.");
-    }
-  }, [response]);
+const PerfilScreen = () => {
+  const { userData, updateUserData } = useContext(UserContext);
+  const [isEditing, setIsEditing] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
+  const navigation = useNavigation();
 
-  // 🧠 Obtener los datos del usuario
-  const fetchUserInfo = async (token) => {
-    try {
-      const userInfoResponse = await fetch(
-        "https://www.googleapis.com/userinfo/v2/me",
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        }
-      );
+  // Estado temporal para edición
+  const [formData, setFormData] = useState({ ...userData });
 
-      const user = await userInfoResponse.json();
-
-      // Guarda los datos localmente
-      await AsyncStorage.setItem("usuario", JSON.stringify(user));
-
-      Alert.alert("Bienvenido", `Hola ${user.name}`);
-      navigation.replace("Home"); // Redirige a la pantalla principal
-    } catch (error) {
-      console.error("Error obteniendo datos del usuario:", error);
-      Alert.alert("Error", "No se pudieron obtener los datos de Google.");
-    }
+  const handleChange = (field, value) => {
+    setFormData((prev) => ({ ...prev, [field]: value }));
   };
 
-  return (
-    <View style={styles.container}>
-      <Ionicons name="logo-google" size={80} color="#A66EFF" style={{ marginBottom: 20 }} />
-      <Text style={styles.title}>Inicia sesión con Google</Text>
+  // 🔄 Función para refrescar los datos desde Firebase
+  const handleRefresh = async () => {
+    setRefreshing(true);
+    try {
+      const user = auth.currentUser;
+      if (user) {
+        const docRef = doc(db, "usuarios", user.uid);
+        const docSnap = await getDoc(docRef);
+        if (docSnap.exists()) {
+          updateUserData(docSnap.data());
+          console.log("✅ Perfil actualizado desde Firestore");
+        } else {
+          console.log("⚠️ No se encontró el documento del usuario.");
+        }
+      }
+    } catch (error) {
+      console.error("❌ Error al refrescar perfil:", error);
+    }
+    setRefreshing(false);
+  };
 
-      <TouchableOpacity
-        disabled={!request}
-        style={styles.googleButton}
-        onPress={() => promptAsync()}
-      >
-        <Ionicons name="logo-google" size={24} color="#fff" />
-        <Text style={styles.googleButtonText}>Continuar con Google</Text>
-      </TouchableOpacity>
-    </View>
+  // 🔁 Refrescar automáticamente al entrar al perfil
+  useFocusEffect(
+    useCallback(() => {
+      handleRefresh();
+    }, [])
   );
-}
 
-// 🎨 Estilos
+  const saveChanges = () => {
+    updateUserData(formData);
+    setIsEditing(false);
+  };
+
+  if (!userData) {
+    return (
+      <SafeAreaView style={styles.safeArea}>
+        <Text style={{ textAlign: "center", marginTop: 50 }}>Cargando perfil...</Text>
+      </SafeAreaView>
+    );
+  }
+
+  return (
+    <SafeAreaView style={styles.safeArea}>
+      <ScrollView
+        contentContainerStyle={styles.container}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={handleRefresh}
+            colors={[GREEN]}
+          />
+        }
+      >
+        <Text style={styles.header}>Bienvenido, {userData.nombre}</Text>
+
+        {/* Tarjeta de perfil */}
+        <View style={styles.card}>
+          <View style={styles.profileHeader}>
+            <FeatherIcon
+              name={userData.genero === "Hombre" ? "user" : "user-check"}
+              size={40}
+              color={GREEN}
+              style={styles.avatar}
+            />
+            <View>
+              <Text style={styles.name}>{userData.nombre}</Text>
+              <Text style={styles.level}>Nivel: {userData.nivel}</Text>
+            </View>
+          </View>
+
+          <TouchableOpacity
+            style={styles.editButton}
+            onPress={() => {
+              setFormData({ ...userData });
+              setIsEditing(true);
+            }}
+          >
+            <Text style={styles.editButtonText}>Editar Perfil</Text>
+          </TouchableOpacity>
+        </View>
+
+        {/* Datos físicos */}
+        <View style={styles.card}>
+          <Text style={styles.cardHeader}>Datos Físicos y Objetivos</Text>
+          <ProfileItem icon="user" label="Género" value={userData.genero} />
+          <ProfileItem icon="repeat" label="Objetivo" value={userData.objetivo} />
+          <ProfileItem icon="award" label="Nivel" value={userData.nivel} />
+          <ProfileItem icon="calendar" label="Edad" value={`${userData.edad} años`} />
+          <ProfileItem icon="package" label="Peso" value={`${userData.peso} kg`} />
+          <ProfileItem icon="maximize" label="Altura" value={`${userData.altura} cm`} />
+        </View>
+
+        {/* 🔔 Ajustes */}
+        <View style={styles.card}>
+          <Text style={styles.cardHeader}>Ajustes</Text>
+          <View style={styles.itemRow}>
+            <View style={styles.itemContent}>
+              <FeatherIcon name="bell" size={20} color={GREEN} style={styles.itemIcon} />
+              <Text style={styles.itemLabel}>Notificaciones</Text>
+            </View>
+            <TouchableOpacity
+              onPress={() =>
+                updateUserData({
+                  ...userData,
+                  notificacionesActivas: !userData.notificacionesActivas,
+                })
+              }
+            >
+              <FeatherIcon
+                name={userData.notificacionesActivas ? "toggle-right" : "toggle-left"}
+                size={30}
+                color={userData.notificacionesActivas ? GREEN : "#ccc"}
+              />
+            </TouchableOpacity>
+          </View>
+        </View>
+      </ScrollView>
+
+      {/* Modal de edición */}
+      <Modal visible={isEditing} animationType="slide" transparent={true}>
+        <View style={styles.modalOverlay}>
+          <ScrollView contentContainerStyle={styles.modalContainer}>
+            <Text style={styles.modalTitle}>Editar Perfil</Text>
+
+            {/* Campos editables */}
+            <TextInput
+              style={styles.input}
+              value={formData.nombre}
+              onChangeText={(t) => handleChange("nombre", t)}
+              placeholder="Nombre"
+            />
+            <TextInput
+              style={styles.input}
+              value={formData.genero}
+              onChangeText={(t) => handleChange("genero", t)}
+              placeholder="Género (Hombre/Mujer)"
+            />
+            <TextInput
+              style={styles.input}
+              value={formData.objetivo}
+              onChangeText={(t) => handleChange("objetivo", t)}
+              placeholder="Objetivo"
+            />
+            <TextInput
+              style={styles.input}
+              value={formData.nivel}
+              onChangeText={(t) => handleChange("nivel", t)}
+              placeholder="Nivel"
+            />
+            <TextInput
+              style={styles.input}
+              keyboardType="numeric"
+              value={formData.edad?.toString()}
+              onChangeText={(t) => handleChange("edad", parseInt(t) || 0)}
+              placeholder="Edad"
+            />
+            <TextInput
+              style={styles.input}
+              keyboardType="numeric"
+              value={formData.peso?.toString()}
+              onChangeText={(t) => handleChange("peso", parseFloat(t) || 0)}
+              placeholder="Peso (kg)"
+            />
+            <TextInput
+              style={styles.input}
+              keyboardType="numeric"
+              value={formData.altura?.toString()}
+              onChangeText={(t) => handleChange("altura", parseFloat(t) || 0)}
+              placeholder="Altura (cm)"
+            />
+
+            <TouchableOpacity
+              style={[styles.modalButton, { backgroundColor: GREEN }]}
+              onPress={saveChanges}
+            >
+              <Text style={styles.modalButtonText}>Guardar Cambios</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={[styles.modalButton, { backgroundColor: "#999" }]}
+              onPress={() => setIsEditing(false)}
+            >
+              <Text style={styles.modalButtonText}>Cancelar</Text>
+            </TouchableOpacity>
+          </ScrollView>
+        </View>
+      </Modal>
+    </SafeAreaView>
+  );
+};
+
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: "#171320",
-    alignItems: "center",
-    justifyContent: "center",
-    padding: 20,
-  },
-  title: {
-    color: "#FFFFFF",
+  safeArea: { flex: 1, backgroundColor: "#f3f4f6" },
+  container: { padding: 20 },
+  header: {
     fontSize: 24,
     fontWeight: "bold",
-    marginBottom: 40,
+    marginBottom: 20,
+    color: "#333",
+    textAlign: "center",
   },
-  googleButton: {
-    flexDirection: "row",
-    backgroundColor: "#A66EFF",
-    paddingVertical: 15,
-    paddingHorizontal: 30,
-    borderRadius: 10,
+  card: {
+    backgroundColor: "#fff",
+    borderRadius: 12,
+    padding: 15,
+    marginBottom: 20,
+    elevation: 2,
+  },
+  profileHeader: { flexDirection: "row", alignItems: "center", marginBottom: 10 },
+  avatar: {
+    marginRight: 15,
+    borderWidth: 2,
+    borderColor: GREEN,
+    padding: 10,
+    borderRadius: 50,
+  },
+  name: { fontSize: 20, fontWeight: "bold", color: "#333" },
+  level: { fontSize: 14, color: "#666" },
+  editButton: {
+    backgroundColor: "#f0f0f0",
+    padding: 10,
+    borderRadius: 25,
+    marginTop: 10,
     alignItems: "center",
   },
-  googleButtonText: {
-    color: "#FFFFFF",
+  editButtonText: { color: GREEN, fontWeight: "600" },
+  cardHeader: {
+    fontSize: 18,
     fontWeight: "bold",
-    fontSize: 16,
-    marginLeft: 10,
+    marginBottom: 10,
+    color: GREEN,
+    borderBottomWidth: 1,
+    borderBottomColor: "#eee",
+    paddingBottom: 5,
   },
+  itemRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    paddingVertical: 10,
+    borderBottomWidth: 1,
+    borderBottomColor: "#f7f7f7",
+  },
+  itemContent: { flexDirection: "row", alignItems: "center" },
+  itemIcon: { marginRight: 10, width: 20 },
+  itemLabel: { fontSize: 16, color: "#444" },
+  itemValue: { fontSize: 16, fontWeight: "500", color: "#666" },
+  progressButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: GREEN,
+    padding: 15,
+    borderRadius: 12,
+    marginBottom: 50,
+    marginHorizontal: 20,
+  },
+  progressButtonText: {
+    color: "#fff",
+    fontSize: 16,
+    fontWeight: "bold",
+  },
+  modalOverlay: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "rgba(0,0,0,0.5)",
+  },
+  modalContainer: {
+    backgroundColor: "white",
+    padding: 25,
+    borderRadius: 15,
+    width: "90%",
+    marginTop: 60,
+  },
+  modalTitle: {
+    fontSize: 20,
+    fontWeight: "bold",
+    marginBottom: 20,
+    color: GREEN,
+    textAlign: "center",
+  },
+  input: {
+    borderWidth: 1,
+    borderColor: "#ccc",
+    padding: 10,
+    borderRadius: 10,
+    marginBottom: 15,
+  },
+  modalButton: {
+    borderRadius: 10,
+    padding: 12,
+    marginTop: 10,
+  },
+  modalButtonText: { color: "white", fontWeight: "bold", textAlign: "center" },
 });
+
+export default PerfilScreen;
