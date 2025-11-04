@@ -1,75 +1,153 @@
-// screens/CronometroScreen.js
-import React, { useState, useRef } from "react";
-import { View, Text, TouchableOpacity, StyleSheet } from "react-native";
-import { auth, db } from "../firebaseConfig";
-import { doc, setDoc, getDoc } from "firebase/firestore";
+import React, { useState, useRef, useEffect } from "react";
+import { View, Text, TouchableOpacity, StyleSheet, Animated } from "react-native";
+import { db, auth } from "../firebaseConfig";
+import { doc, updateDoc, getDoc, arrayUnion } from "firebase/firestore";
+import { AnimatedCircularProgress } from "react-native-circular-progress";
 
 export default function CronometroScreen() {
   const [segundos, setSegundos] = useState(0);
   const [activo, setActivo] = useState(false);
-  const intervalo = useRef(null);
+  const [guardado, setGuardado] = useState(false);
+  const intervalRef = useRef(null);
+  const scaleAnim = useRef(new Animated.Value(1)).current;
+  const fadeAnim = useRef(new Animated.Value(0)).current;
 
-  const toggleCronometro = () => {
+  const iniciarPausar = () => {
+    Animated.sequence([
+      Animated.timing(scaleAnim, { toValue: 0.95, duration: 100, useNativeDriver: true }),
+      Animated.timing(scaleAnim, { toValue: 1, duration: 100, useNativeDriver: true }),
+    ]).start();
+
     if (activo) {
-      clearInterval(intervalo.current);
+      clearInterval(intervalRef.current);
+      setActivo(false);
     } else {
-      intervalo.current = setInterval(() => {
-        setSegundos((s) => s + 1);
-      }, 1000);
+      setActivo(true);
+      intervalRef.current = setInterval(() => setSegundos((prev) => prev + 1), 1000);
     }
-    setActivo(!activo);
   };
 
-  const guardarTiempo = async () => {
-    const user = auth.currentUser;
-    if (!user) return;
-
-    const hoy = new Date().toISOString().split("T")[0];
-    const ref = doc(db, "usuarios", user.uid);
-    const snap = await getDoc(ref);
-
-    const data = snap.exists() ? snap.data() : {};
-    const nuevosTiempos = data.tiempos || {};
-
-    nuevosTiempos[hoy] = segundos;
-
-    await setDoc(ref, { tiempos: nuevosTiempos }, { merge: true });
-
+  const reiniciar = () => {
+    clearInterval(intervalRef.current);
     setActivo(false);
-    clearInterval(intervalo.current);
-    alert(`Tiempo de ${segundos} segundos guardado para ${hoy}`);
+    setSegundos(0);
   };
+
+  const formatoTiempo = (s) => {
+    const hrs = Math.floor(s / 3600);
+    const mins = Math.floor((s % 3600) / 60);
+    const secs = s % 60;
+    return `${hrs.toString().padStart(2, "0")}:${mins.toString().padStart(2, "0")}:${secs
+      .toString()
+      .padStart(2, "0")}`;
+  };
+
+  // Guardar tiempo
+  const guardarTiempo = async () => {
+    try {
+      const user = auth.currentUser;
+      if (!user) return alert("Debes iniciar sesión.");
+
+      const duracion = formatoTiempo(segundos);
+      const calorias = Math.round((segundos / 60) * 8);
+      const fecha = new Date().toISOString().split("T")[0];
+
+      const userRef = doc(db, "usuarios", user.uid);
+      const userSnap = await getDoc(userRef);
+
+      if (userSnap.exists()) {
+        await updateDoc(userRef, {
+          entrenamientos: arrayUnion({ fecha, duracion, calorias }),
+          fechasEntrenamiento: arrayUnion(fecha),
+        });
+
+        // Animación de guardado
+        setGuardado(true);
+        Animated.sequence([
+          Animated.timing(fadeAnim, { toValue: 1, duration: 400, useNativeDriver: true }),
+          Animated.delay(1000),
+          Animated.timing(fadeAnim, { toValue: 0, duration: 400, useNativeDriver: true }),
+        ]).start(() => setGuardado(false));
+
+        reiniciar();
+      }
+    } catch (error) {
+      console.error("Error al guardar:", error);
+      alert("❌ Error al guardar el tiempo.");
+    }
+  };
+
+  useEffect(() => {
+    return () => clearInterval(intervalRef.current);
+  }, []);
 
   return (
     <View style={styles.container}>
       <Text style={styles.title}>⏱ Cronómetro</Text>
-      <Text style={styles.timer}>{segundos}s</Text>
 
-      <TouchableOpacity style={styles.button} onPress={toggleCronometro}>
-        <Text style={styles.buttonText}>{activo ? "Detener" : "Iniciar"}</Text>
-      </TouchableOpacity>
-
-      <TouchableOpacity
-        style={[styles.button, { backgroundColor: "#16a34a" }]}
-        onPress={guardarTiempo}
+      <AnimatedCircularProgress
+        size={220}
+        width={10}
+        fill={(segundos % 60) * (100 / 60)}
+        tintColor="#22c55e"
+        backgroundColor="#1f2937"
+        rotation={0}
       >
-        <Text style={styles.buttonText}>Guardar tiempo</Text>
-      </TouchableOpacity>
+        {() => <Text style={styles.time}>{formatoTiempo(segundos)}</Text>}
+      </AnimatedCircularProgress>
+
+      <View style={styles.buttons}>
+        <Animated.View style={{ transform: [{ scale: scaleAnim }], width: "75%" }}>
+          <TouchableOpacity
+            style={[styles.button, activo ? styles.pauseBtn : styles.startBtn]}
+            onPress={iniciarPausar}
+          >
+            <Text style={styles.buttonText}>{activo ? "Pausar" : "Iniciar"}</Text>
+          </TouchableOpacity>
+        </Animated.View>
+
+        <View style={styles.secondaryButtons}>
+          <TouchableOpacity style={[styles.smallButton, styles.resetBtn]} onPress={reiniciar}>
+            <Text style={styles.smallButtonText}>Reiniciar</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity style={[styles.smallButton, styles.saveBtn]} onPress={guardarTiempo}>
+            <Text style={styles.smallButtonText}>Guardar</Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+
+      {/* ✅ Animación de guardado */}
+      {guardado && (
+        <Animated.View style={[styles.savedMessage, { opacity: fadeAnim }]}>
+          <Text style={styles.savedText}>✅ Guardado en tu historial</Text>
+        </Animated.View>
+      )}
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#111827", alignItems: "center", justifyContent: "center" },
-  title: { color: "#16a34a", fontSize: 26, fontWeight: "bold", marginBottom: 20 },
-  timer: { color: "#fff", fontSize: 48, marginBottom: 30 },
-  button: {
-    backgroundColor: "#1f2937",
-    padding: 15,
-    borderRadius: 10,
-    width: "70%",
-    alignItems: "center",
-    marginBottom: 10,
+  container: { flex: 1, backgroundColor: "#0f172a", alignItems: "center", justifyContent: "center" },
+  title: { fontSize: 26, fontWeight: "bold", color: "#22c55e", marginBottom: 30 },
+  time: { fontSize: 38, color: "#fff", fontWeight: "bold" },
+  buttons: { marginTop: 40, width: "100%", alignItems: "center" },
+  button: { alignItems: "center", justifyContent: "center", paddingVertical: 14, borderRadius: 14 },
+  startBtn: { backgroundColor: "#22c55e" },
+  pauseBtn: { backgroundColor: "#facc15" },
+  buttonText: { color: "#fff", fontSize: 18, fontWeight: "bold" },
+  secondaryButtons: { flexDirection: "row", justifyContent: "space-between", width: "75%", gap: 12 },
+  smallButton: { flex: 1, alignItems: "center", justifyContent: "center", borderRadius: 10, paddingVertical: 12 },
+  resetBtn: { backgroundColor: "#6b7280" },
+  saveBtn: { backgroundColor: "#2563eb" },
+  smallButtonText: { color: "#fff", fontWeight: "600", fontSize: 15 },
+  savedMessage: {
+    position: "absolute",
+    bottom: 80,
+    backgroundColor: "#22c55e",
+    paddingVertical: 10,
+    paddingHorizontal: 25,
+    borderRadius: 25,
   },
-  buttonText: { color: "#fff", fontSize: 18 },
+  savedText: { color: "white", fontWeight: "bold", fontSize: 16 },
 });

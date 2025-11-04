@@ -9,7 +9,6 @@ import {
 } from "react-native";
 import { getBodyParts } from "../services/exerciseApi";
 
-// 🖼️ Mapeo de imágenes locales — claves en INGLÉS (coinciden con `original`)
 const imagesMap = {
   chest: require("../assets/pecho.png"),
   back: require("../assets/espalda.png"),
@@ -71,7 +70,7 @@ const RutinasScreen = ({ navigation }) => {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>ZONA PRINCIPAL</Text>
+      <Text style={styles.title}>RUTINAS</Text>
 
       <FlatList
         data={bodyParts}

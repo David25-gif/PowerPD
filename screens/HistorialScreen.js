@@ -1,86 +1,46 @@
 import React, { useEffect, useState } from "react";
-import { View, Text, FlatList, StyleSheet, ActivityIndicator } from "react-native";
-import { auth, db } from "../firebaseConfig";
-import { doc, onSnapshot } from "firebase/firestore";
-import { Ionicons } from "@expo/vector-icons";
+import { View, Text, StyleSheet, FlatList } from "react-native";
+import { db, auth } from "../firebaseConfig";
+import { doc, getDoc } from "firebase/firestore";
 
 export default function HistorialScreen() {
-  const [fechas, setFechas] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [entrenamientos, setEntrenamientos] = useState([]);
 
   useEffect(() => {
-    const user = auth.currentUser;
+    const obtenerHistorial = async () => {
+      try {
+        const user = auth.currentUser;
+        if (!user) return;
 
-    if (!user) {
-      console.log("⛔ No hay usuario autenticado");
-      setLoading(false);
-      return;
-    }
-
-    const ref = doc(db, "usuarios", user.uid);
-
-    const unsubscribe = onSnapshot(
-      ref,
-      (snapshot) => {
-        if (snapshot.exists()) {
-          const data = snapshot.data();
-          const fechasEntrenamiento = data.fechasEntrenamiento || {};
-
-          let listaFechas = [];
-
-          // 🧠 Si está guardado como objeto tipo {"2025-11-03": true}
-          if (!Array.isArray(fechasEntrenamiento)) {
-            listaFechas = Object.keys(fechasEntrenamiento);
-          }
-          // 🧠 Si está guardado como array tipo ["2025-11-03", "2025-11-13"]
-          else {
-            listaFechas = fechasEntrenamiento.filter((f) => typeof f === "string");
-          }
-
-          // 🧩 Ordena las fechas de más reciente a más antigua
-          listaFechas.sort((a, b) => new Date(b) - new Date(a));
-
-          setFechas(listaFechas);
-        } else {
-          setFechas([]);
+        const userRef = doc(db, "usuarios", user.uid);
+        const snap = await getDoc(userRef);
+        if (snap.exists()) {
+          const data = snap.data();
+          setEntrenamientos(data.entrenamientos || []);
         }
-
-        setLoading(false);
-      },
-      (error) => {
-        console.error("❌ Error al cargar historial:", error);
-        setLoading(false);
+      } catch (error) {
+        console.error("Error cargando historial:", error);
       }
-    );
+    };
 
-    return () => unsubscribe();
+    obtenerHistorial();
   }, []);
-
-  if (loading) {
-    return (
-      <View style={styles.loader}>
-        <ActivityIndicator size="large" color="#16a34a" />
-      </View>
-    );
-  }
 
   return (
     <View style={styles.container}>
-      <View style={styles.header}>
-        <Ionicons name="calendar" size={24} color="#16a34a" />
-        <Text style={styles.title}>Historial de Entrenamientos</Text>
-      </View>
+      <Text style={styles.title}>🏋️‍♀️ Historial de Entrenamientos</Text>
 
-      {fechas.length === 0 ? (
-        <Text style={styles.emptyText}>Aún no tienes entrenamientos registrados 📅</Text>
+      {entrenamientos.length === 0 ? (
+        <Text style={styles.emptyText}>Aún no tienes entrenamientos guardados.</Text>
       ) : (
         <FlatList
-          data={fechas}
-          keyExtractor={(item) => item}
+          data={entrenamientos.slice().reverse()}
+          keyExtractor={(item, index) => index.toString()}
           renderItem={({ item }) => (
-            <View style={styles.item}>
-              <Ionicons name="checkmark-done" size={20} color="#22c55e" />
-              <Text style={styles.date}>{item}</Text>
+            <View style={styles.card}>
+              <Text style={styles.date}>{item.fecha}</Text>
+              <Text style={styles.text}>Duración: {item.duracion}</Text>
+              <Text style={styles.text}>Calorías: {item.calorias} kcal</Text>
             </View>
           )}
         />
@@ -90,45 +50,17 @@ export default function HistorialScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: "#0f172a",
-    padding: 20,
-  },
-  header: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginBottom: 20,
-  },
-  title: {
-    fontSize: 22,
-    color: "#16a34a",
-    fontWeight: "bold",
-    marginLeft: 10,
-  },
-  item: {
-    flexDirection: "row",
-    alignItems: "center",
+  container: { flex: 1, backgroundColor: "#0f172a", padding: 20 },
+  title: { color: "#22c55e", fontSize: 24, fontWeight: "bold", textAlign: "center", marginBottom: 20 },
+  emptyText: { color: "#9ca3af", textAlign: "center", fontSize: 16, marginTop: 50 },
+  card: {
     backgroundColor: "#1e293b",
     padding: 15,
-    marginVertical: 6,
-    borderRadius: 10,
+    borderRadius: 12,
+    marginBottom: 12,
+    borderLeftWidth: 5,
+    borderLeftColor: "#22c55e",
   },
-  date: {
-    color: "#fff",
-    fontSize: 18,
-    marginLeft: 10,
-  },
-  emptyText: {
-    color: "#9ca3af",
-    fontSize: 16,
-    textAlign: "center",
-    marginTop: 40,
-  },
-  loader: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-    backgroundColor: "#0f172a",
-  },
+  date: { color: "#facc15", fontWeight: "bold", marginBottom: 5 },
+  text: { color: "#fff", fontSize: 16 },
 });
