@@ -1,13 +1,20 @@
 import React, { useState, useContext } from 'react';
-import { View, Text, TextInput, Button, StyleSheet, Alert, TouchableOpacity, Platform } from 'react-native';
+import { View, Text, TextInput, StyleSheet, Alert, TouchableOpacity, Platform } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { createUserWithEmailAndPassword, updateProfile } from "firebase/auth";
 import { auth, db } from "../firebaseConfig";
 import { doc, setDoc } from 'firebase/firestore';
-import { UserContext } from '../App'; // Contexto global para usuario
+import { UserContext } from '../App';
+
+// 🎨 Paleta de colores
+const BG = '#0F172A';         // Fondo azul oscuro
+const BUTTON = '#1D4ED8';     // Azul brillante
+const BUTTON_ALT = '#3B82F6'; // Azul claro (sombra)
+const TEXT = '#FFFFFF';       // Blanco
+const SUBTEXT = '#94A3B8';    // Gris azulado suave
 
 export default function RegistroScreen({ navigation }) {
-  const { updateUserData } = useContext(UserContext); // Acceso a contexto global
+  const { updateUserData } = useContext(UserContext);
 
   const [nombre, setNombre] = useState('');
   const [email, setEmail] = useState('');
@@ -65,7 +72,6 @@ export default function RegistroScreen({ navigation }) {
       const userCredential = await createUserWithEmailAndPassword(auth, email, password);
       await updateProfile(userCredential.user, { displayName: nombre });
 
-      // Guardar datos adicionales en Firestore
       await setDoc(doc(db, "usuarios", userCredential.user.uid), {
         nombre,
         email,
@@ -75,12 +81,9 @@ export default function RegistroScreen({ navigation }) {
         profileComplete: false,
       });
 
-      // Actualizar contexto global
       updateUserData({ nombre });
 
       mostrarAlerta('✅ Registro exitoso', 'Tu cuenta ha sido creada con éxito.');
-
-      // Navegar a la siguiente pantalla
       navigation.replace("Genero");
 
     } catch (error) {
@@ -102,6 +105,7 @@ export default function RegistroScreen({ navigation }) {
       <TextInput
         style={styles.input}
         placeholder="Nombre completo"
+        placeholderTextColor={SUBTEXT}
         value={nombre}
         onChangeText={setNombre}
         autoCapitalize="words"
@@ -109,6 +113,7 @@ export default function RegistroScreen({ navigation }) {
       <TextInput
         style={styles.input}
         placeholder="Correo electrónico"
+        placeholderTextColor={SUBTEXT}
         keyboardType="email-address"
         value={email}
         onChangeText={setEmail}
@@ -119,12 +124,13 @@ export default function RegistroScreen({ navigation }) {
         <TextInput
           style={styles.passwordInput}
           placeholder="Contraseña"
+          placeholderTextColor={SUBTEXT}
           secureTextEntry={!showPassword}
           value={password}
           onChangeText={setPassword}
         />
         <TouchableOpacity onPress={() => setShowPassword(!showPassword)}>
-          <Ionicons name={showPassword ? 'eye-off' : 'eye'} size={22} color="#333" />
+          <Ionicons name={showPassword ? 'eye-off' : 'eye'} size={22} color={SUBTEXT} />
         </TouchableOpacity>
       </View>
 
@@ -132,68 +138,107 @@ export default function RegistroScreen({ navigation }) {
         <TextInput
           style={styles.passwordInput}
           placeholder="Confirmar contraseña"
+          placeholderTextColor={SUBTEXT}
           secureTextEntry={!showConfirmPassword}
           value={confirmPassword}
           onChangeText={setConfirmPassword}
         />
         <TouchableOpacity onPress={() => setShowConfirmPassword(!showConfirmPassword)}>
-          <Ionicons name={showConfirmPassword ? 'eye-off' : 'eye'} size={22} color="#333" />
+          <Ionicons name={showConfirmPassword ? 'eye-off' : 'eye'} size={22} color={SUBTEXT} />
         </TouchableOpacity>
       </View>
 
-      <View style={styles.buttonContainer}>
-        <Button title="Registrarse" onPress={handleRegistro} />
-      </View>
+      <TouchableOpacity style={styles.buttonPrimary} onPress={handleRegistro}>
+        <Text style={styles.buttonText}>Registrarse</Text>
+      </TouchableOpacity>
 
       <Text style={styles.link}>¿Ya tienes cuenta?</Text>
-      <Button title="Inicia sesión" onPress={() => navigation.navigate('Login')} />
+
+      <TouchableOpacity style={styles.buttonSecondary} onPress={() => navigation.navigate('Login')}>
+        <Text style={styles.buttonAltText}>Inicia sesión</Text>
+      </TouchableOpacity>
     </View>
   );
 }
 
+// 🎨 Estilos
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    backgroundColor: BG,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#f4f4f4',
     padding: 20,
   },
   title: {
-    fontSize: 26,
+    fontSize: 28,
     fontWeight: 'bold',
-    marginBottom: 25,
+    color: BUTTON_ALT,
+    marginBottom: 30,
   },
   input: {
     width: '90%',
     borderWidth: 1,
-    borderColor: '#ccc',
+    borderColor: BUTTON_ALT,
     borderRadius: 10,
-    padding: 10,
+    padding: 12,
     marginBottom: 15,
-    backgroundColor: '#fff',
+    backgroundColor: '#1E293B',
+    color: TEXT,
+    fontSize: 16,
   },
   passwordContainer: {
     width: '90%',
     flexDirection: 'row',
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: '#ccc',
+    borderColor: BUTTON_ALT,
     borderRadius: 10,
     paddingHorizontal: 10,
     marginBottom: 15,
-    backgroundColor: '#fff',
+    backgroundColor: '#1E293B',
   },
   passwordInput: {
     flex: 1,
-    padding: 10,
+    padding: 12,
+    color: TEXT,
+    fontSize: 16,
   },
-  buttonContainer: {
-    width: '80%',
-    marginVertical: 10,
+  buttonPrimary: {
+    backgroundColor: BUTTON,
+    paddingVertical: 14,
+    borderRadius: 10,
+    width: '90%',
+    alignItems: 'center',
+    marginTop: 10,
+    shadowColor: BUTTON_ALT,
+    shadowOpacity: 0.4,
+    shadowOffset: { width: 0, height: 3 },
+    shadowRadius: 5,
+    elevation: 5,
+  },
+  buttonText: {
+    color: TEXT,
+    fontSize: 18,
+    fontWeight: 'bold',
   },
   link: {
+    marginTop: 15,
+    color: SUBTEXT,
+    fontSize: 14,
+  },
+  buttonSecondary: {
     marginTop: 10,
-    color: '#333',
+    borderColor: BUTTON_ALT,
+    borderWidth: 2,
+    borderRadius: 10,
+    paddingVertical: 10,
+    width: '60%',
+    alignItems: 'center',
+  },
+  buttonAltText: {
+    color: BUTTON_ALT,
+    fontSize: 16,
+    fontWeight: 'bold',
   },
 });
