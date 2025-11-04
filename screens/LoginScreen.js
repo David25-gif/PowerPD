@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, Button, StyleSheet, Alert, TouchableOpacity, Platform } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert, Platform } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { signInWithEmailAndPassword } from "firebase/auth";
 import { auth, db } from "../firebaseConfig";
@@ -30,7 +30,6 @@ export default function LoginScreen({ navigation }) {
 
       mostrarAlerta('Inicio de sesión exitoso', `¡Bienvenido, ${user.displayName || user.email}!`);
 
-      // 🔹 Verificar perfil del usuario en Firestore
       const uid = user.uid;
       const docRef = doc(db, "usuarios", uid);
       const docSnap = await getDoc(docRef);
@@ -69,6 +68,7 @@ export default function LoginScreen({ navigation }) {
       <TextInput
         style={styles.input}
         placeholder="Correo electrónico"
+        placeholderTextColor="#aaa"
         keyboardType="email-address"
         value={email}
         onChangeText={setEmail}
@@ -78,6 +78,7 @@ export default function LoginScreen({ navigation }) {
         <TextInput
           style={styles.passwordInput}
           placeholder="Contraseña"
+          placeholderTextColor="#aaa"
           secureTextEntry={!showPassword}
           value={password}
           onChangeText={setPassword}
@@ -86,27 +87,85 @@ export default function LoginScreen({ navigation }) {
           <Ionicons
             name={showPassword ? 'eye-off' : 'eye'}
             size={22}
-            color="#333"
+            color="#ccc"
           />
         </TouchableOpacity>
       </View>
 
-      <View style={styles.buttonContainer}>
-        <Button title="Entrar" onPress={handleLogin} />
-      </View>
+      <TouchableOpacity style={styles.button} onPress={handleLogin}>
+        <Text style={styles.buttonText}>ENTRAR</Text>
+      </TouchableOpacity>
 
-      <Text style={styles.link}>¿No tienes cuenta?</Text>
-      <Button title="Regístrate" onPress={() => navigation.navigate('Registro')} />
+      <Text style={styles.text}>¿No tienes cuenta?</Text>
+
+      <TouchableOpacity
+        style={[styles.button, styles.registerButton]}
+        onPress={() => navigation.navigate('Registro')}
+      >
+        <Text style={styles.buttonText}>REGÍSTRATE</Text>
+      </TouchableOpacity>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#0F172A', padding: 20 },
-  title: { fontSize: 26, fontWeight: 'bold', marginBottom: 25 },
-  input: { width: '90%', borderWidth: 1, borderColor: '#ccc', borderRadius: 10, padding: 10, marginBottom: 15, backgroundColor: '#fff' },
-  passwordContainer: { width: '90%', flexDirection: 'row', alignItems: 'center', borderWidth: 1, borderColor: '#ccc', borderRadius: 10, paddingHorizontal: 10, marginBottom: 15, backgroundColor: '#fff' },
-  passwordInput: { flex: 1, padding: 10 },
-  buttonContainer: { width: '80%', marginVertical: 10 },
-  link: { marginTop: 10, color: '#333' },
+  container: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#0F172A', // azul oscuro
+    padding: 20,
+  },
+  title: {
+    fontSize: 26,
+    fontWeight: 'bold',
+    color: '#FFFFFF',
+    marginBottom: 25,
+  },
+  input: {
+    width: '90%',
+    borderWidth: 1,
+    borderColor: '#1E293B',
+    borderRadius: 10,
+    padding: 12,
+    marginBottom: 15,
+    backgroundColor: '#1E293B',
+    color: '#FFFFFF',
+  },
+  passwordContainer: {
+    width: '90%',
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#1E293B',
+    borderRadius: 10,
+    paddingHorizontal: 10,
+    marginBottom: 15,
+    backgroundColor: '#1E293B',
+  },
+  passwordInput: {
+    flex: 1,
+    padding: 12,
+    color: '#FFFFFF',
+  },
+  button: {
+    width: '80%',
+    backgroundColor: '#1D4ED8', // azul brillante
+    paddingVertical: 12,
+    borderRadius: 10,
+    alignItems: 'center',
+    marginVertical: 10,
+  },
+  buttonText: {
+    color: '#FFFFFF',
+    fontWeight: 'bold',
+    fontSize: 16,
+  },
+  registerButton: {
+    backgroundColor: '#3B82F6', // azul más claro
+  },
+  text: {
+    color: '#94A3B8',
+    marginTop: 10,
+  },
 });
