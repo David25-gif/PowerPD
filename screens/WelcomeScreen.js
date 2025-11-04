@@ -2,12 +2,11 @@ import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, SafeAreaView } from 'react-native';
 import * as Animatable from 'react-native-animatable';
 
-// 🎨 Nueva paleta de colores (azules)
-const BG = '#0F172A';         // Fondo oscuro
-const INPUT_BG = '#1E293B';   // Azul grisáceo
-const BUTTON = '#1D4ED8';     // Azul brillante
-const BUTTON_ALT = '#3B82F6'; // Azul claro
-const TEXT = '#FFFFFF';       // Blanco puro
+// 🎨 Paleta de colores azules
+const BG = '#0F172A';         // Fondo azul oscuro
+const BUTTON = '#1D4ED8';     // Azul brillante (botón principal)
+const BUTTON_ALT = '#3B82F6'; // Azul claro (sombra o acento)
+const TEXT = '#FFFFFF';       // Blanco
 const SUBTEXT = '#94A3B8';    // Gris azulado suave
 
 export default function WelcomeScreen({ navigation }) {
@@ -44,7 +43,7 @@ export default function WelcomeScreen({ navigation }) {
         Tu compañero para entrenar y mantenerte en forma.
       </Animatable.Text>
 
-      {/* 🚀 Botón principal */}
+      {/* 🚀 Botón */}
       <Animatable.View
         animation="fadeInUp"
         delay={1200}

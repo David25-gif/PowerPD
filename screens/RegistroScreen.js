@@ -4,10 +4,10 @@ import { Ionicons } from '@expo/vector-icons';
 import { createUserWithEmailAndPassword, updateProfile } from "firebase/auth";
 import { auth, db } from "../firebaseConfig";
 import { doc, setDoc } from 'firebase/firestore';
-import { UserContext } from '../App'; // ✅ Importa el contexto global
+import { UserContext } from '../App'; // Contexto global para usuario
 
 export default function RegistroScreen({ navigation }) {
-  const { updateUserData } = useContext(UserContext); // ✅ Acceso al contexto global
+  const { updateUserData } = useContext(UserContext); // Acceso a contexto global
 
   const [nombre, setNombre] = useState('');
   const [email, setEmail] = useState('');
@@ -65,7 +65,7 @@ export default function RegistroScreen({ navigation }) {
       const userCredential = await createUserWithEmailAndPassword(auth, email, password);
       await updateProfile(userCredential.user, { displayName: nombre });
 
-      // ✅ Guardar en Firestore
+      // Guardar datos adicionales en Firestore
       await setDoc(doc(db, "usuarios", userCredential.user.uid), {
         nombre,
         email,
@@ -75,19 +75,23 @@ export default function RegistroScreen({ navigation }) {
         profileComplete: false,
       });
 
-      // ✅ Guardar en contexto global
+      // Actualizar contexto global
       updateUserData({ nombre });
 
       mostrarAlerta('✅ Registro exitoso', 'Tu cuenta ha sido creada con éxito.');
 
-      // ✅ Ir a la pantalla de género
+      // Navegar a la siguiente pantalla
       navigation.replace("Genero");
 
     } catch (error) {
       console.log("Error en Firebase:", error.message);
-      if (error.code === 'auth/email-already-in-use') mostrarAlerta('Error', 'El correo ya está registrado.');
-      else if (error.code === 'auth/weak-password') mostrarAlerta('Error', 'La contraseña es demasiado débil.');
-      else mostrarAlerta('Error', 'No se pudo crear la cuenta.');
+      if (error.code === 'auth/email-already-in-use') {
+        mostrarAlerta('Error', 'El correo ya está registrado.');
+      } else if (error.code === 'auth/weak-password') {
+        mostrarAlerta('Error', 'La contraseña es demasiado débil.');
+      } else {
+        mostrarAlerta('Error', 'No se pudo crear la cuenta.');
+      }
     }
   };
 
@@ -100,6 +104,7 @@ export default function RegistroScreen({ navigation }) {
         placeholder="Nombre completo"
         value={nombre}
         onChangeText={setNombre}
+        autoCapitalize="words"
       />
       <TextInput
         style={styles.input}
@@ -107,6 +112,7 @@ export default function RegistroScreen({ navigation }) {
         keyboardType="email-address"
         value={email}
         onChangeText={setEmail}
+        autoCapitalize="none"
       />
 
       <View style={styles.passwordContainer}>
