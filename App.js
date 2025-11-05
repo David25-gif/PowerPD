@@ -15,6 +15,7 @@ import RegistroScreen from "./screens/RegistroScreen";
 import GenderScreen from "./screens/GenderScreen";
 import EdadPesoScreen from "./screens/EdadPesoScreen";
 import HomeTabs from "./screens/HomeTabs";
+import PerfilScreen from './screens/PerfilScreen';
 
 
 

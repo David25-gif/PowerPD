@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { View, Text, StyleSheet, FlatList } from "react-native";
 import { db, auth } from "../firebaseConfig";
-import { doc, getDoc } from "firebase/firestore";
+import { collection, query, where, orderBy, getDocs } from "firebase/firestore";
 
 export default function HistorialScreen() {
   const [entrenamientos, setEntrenamientos] = useState([]);
@@ -12,12 +12,24 @@ export default function HistorialScreen() {
         const user = auth.currentUser;
         if (!user) return;
 
-        const userRef = doc(db, "usuarios", user.uid);
-        const snap = await getDoc(userRef);
-        if (snap.exists()) {
-          const data = snap.data();
-          setEntrenamientos(data.entrenamientos || []);
-        }
+        const q = query(
+          collection(db, "progresos"),
+          where("userId", "==", user.uid),
+          orderBy("fecha", "asc")
+        );
+
+        const snapshot = await getDocs(q);
+        const data = snapshot.docs.map((doc) => {
+          const d = doc.data();
+          return {
+            id: doc.id,
+            duracion: `${Math.floor(d.tiempo / 60)} min ${d.tiempo % 60} s`,
+            calorias: d.calorias ? d.calorias.toFixed(1) : "0",
+            fecha: d.fecha?.toDate().toLocaleString() || "Sin fecha",
+          };
+        });
+
+        setEntrenamientos(data);
       } catch (error) {
         console.error("Error cargando historial:", error);
       }
@@ -34,8 +46,8 @@ export default function HistorialScreen() {
         <Text style={styles.emptyText}>Aún no tienes entrenamientos guardados.</Text>
       ) : (
         <FlatList
-          data={entrenamientos.slice().reverse()}
-          keyExtractor={(item, index) => index.toString()}
+          data={entrenamientos}
+          keyExtractor={(item) => item.id}
           renderItem={({ item }) => (
             <View style={styles.card}>
               <Text style={styles.date}>{item.fecha}</Text>
@@ -51,8 +63,19 @@ export default function HistorialScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: "#0f172a", padding: 20 },
-  title: { color: "#22c55e", fontSize: 24, fontWeight: "bold", textAlign: "center", marginBottom: 20 },
-  emptyText: { color: "#9ca3af", textAlign: "center", fontSize: 16, marginTop: 50 },
+  title: {
+    color: "#22c55e",
+    fontSize: 24,
+    fontWeight: "bold",
+    textAlign: "center",
+    marginBottom: 20,
+  },
+  emptyText: {
+    color: "#9ca3af",
+    textAlign: "center",
+    fontSize: 16,
+    marginTop: 50,
+  },
   card: {
     backgroundColor: "#1e293b",
     padding: 15,

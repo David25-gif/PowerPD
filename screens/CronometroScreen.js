@@ -1,8 +1,7 @@
 import React, { useState, useRef, useEffect } from "react";
 import { View, Text, TouchableOpacity, StyleSheet, Alert, Animated } from "react-native";
 import { getFirestore, collection, addDoc, serverTimestamp } from "firebase/firestore";
-import { getAuth } from "firebase/auth";
-import { app } from "../firebaseConfig";
+import { db, auth } from "../firebaseConfig";
 
 const db = getFirestore(app);
 
@@ -51,7 +50,7 @@ export default function CronometroScreen() {
 
   const manejarGuardar = async () => {
     try {
-      const user = getAuth().currentUser;
+      const user = auth.currentUser;
       if (!user) {
         Alert.alert("Error", "Debes iniciar sesión para guardar tu progreso.");
         return;

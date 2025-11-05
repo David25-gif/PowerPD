@@ -1,23 +1,14 @@
 import React, { useContext, useState, useCallback } from "react";
-import {
-  View,
-  Text,
-  StyleSheet,
-  SafeAreaView,
-  TouchableOpacity,
-  Modal,
-  TextInput,
-  ScrollView,
-  RefreshControl,
-} from "react-native";
+import { View, Text, StyleSheet, TouchableOpacity, Modal, TextInput, ScrollView, RefreshControl } from "react-native";
 import { useFocusEffect, useNavigation } from "@react-navigation/native";
 import { UserContext } from "../App";
 import FeatherIcon from "react-native-vector-icons/Feather";
 import { db, auth } from "../firebaseConfig";
 import { doc, getDoc } from "firebase/firestore";
 import { signOut } from "firebase/auth"; // 👈 Para cerrar sesión
+import { SafeAreaView } from "react-native-safe-area-context";
 
-const GREEN = "#16a34a";
+
 const BACKGROUND = "#0F172A"; // 👈 Color de fondo personalizado
 const TEXT_COLOR = "#E2E8F0"; // 👈 Color de texto claro sobre fondo oscuro
 
@@ -59,7 +50,7 @@ const PerfilScreen = () => {
         }
       }
     } catch (error) {
-      console.error("❌ Error al refrescar perfil:", error);
+      console.error(" Error al refrescar perfil:", error);
     }
     setRefreshing(false);
   };
@@ -82,13 +73,14 @@ const PerfilScreen = () => {
       console.log("👋 Sesión cerrada correctamente");
       navigation.replace("Login"); // 👈 Redirige al login (asegúrese de tener esta pantalla en el stack)
     } catch (error) {
-      console.error("❌ Error al cerrar sesión:", error);
+      console.error(" Error al cerrar sesión:", error);
     }
   };
 
   if (!userData) {
     return (
-      <SafeAreaView style={[styles.safeArea, { backgroundColor: BACKGROUND }]}>
+      <SafeAreaView style={[styles.safeArea, { backgroundColor: BACKGROUND }]}
+      edges={["right", "bottom", "left"]}>
         <Text style={{ textAlign: "center", marginTop: 50, color: TEXT_COLOR }}>
           Cargando perfil...
         </Text>
@@ -97,16 +89,20 @@ const PerfilScreen = () => {
   }
 
   return (
-    <SafeAreaView style={[styles.safeArea, { backgroundColor: BACKGROUND }]}>
+    <SafeAreaView style={[styles.safeArea, { backgroundColor: BACKGROUND }]}
+    edges={["right", "bottom", "left"]}>
       <ScrollView
-        contentContainerStyle={styles.container}
+        contentContainerStyle={[styles.container, { paddingBottom: 120 }]} // 👈 Espacio extra al final
         refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} colors={[GREEN]} />
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={handleRefresh}
+            colors={[GREEN]}
+          />
         }
       >
-        <Text style={[styles.header, { color: TEXT_COLOR }]}>
-          Bienvenido, {userData.nombre}
-        </Text>
+        <Text style={[styles.header, { color: "#F1F5F9" }]}>Perfil</Text>
+
 
         {/* Tarjeta de perfil */}
         <View style={styles.card}>
@@ -118,7 +114,7 @@ const PerfilScreen = () => {
               style={styles.avatar}
             />
             <View>
-              <Text style={[styles.name, { color: "#111" }]}>{userData.nombre}</Text>
+              <Text style={[styles.name, { color: "#F1F5F9" }]}>{userData.nombre}</Text>
               <Text style={styles.level}>Nivel: {userData.nivel}</Text>
             </View>
           </View>
@@ -248,6 +244,8 @@ const PerfilScreen = () => {
     </SafeAreaView>
   );
 };
+
+
 const BG = "#0F172A"; // fondo azul oscuro
 const TEXT = "#F1F5F9"; // texto principal claro
 const SUBTEXT = "#94A3B8"; // texto secundario gris-azulado
@@ -261,7 +259,7 @@ const styles = StyleSheet.create({
     backgroundColor: BG,
   },
   container: {
-    flex: 1,
+    flexGrow: 1,
     padding: 20,
     backgroundColor: BG,
   },
@@ -401,3 +399,5 @@ const styles = StyleSheet.create({
     textAlign: "center",
   },
 });
+
+export default PerfilScreen;
