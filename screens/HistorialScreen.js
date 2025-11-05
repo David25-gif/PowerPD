@@ -15,7 +15,7 @@ export default function HistorialScreen() {
         const q = query(
           collection(db, "progresos"),
           where("userId", "==", user.uid),
-          orderBy("fecha", "asc")
+          orderBy("fecha", "desc")
         );
 
         const snapshot = await getDocs(q);

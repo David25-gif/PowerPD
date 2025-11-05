@@ -3,7 +3,6 @@ import { View, Text, TouchableOpacity, StyleSheet, Alert, Animated } from "react
 import { getFirestore, collection, addDoc, serverTimestamp } from "firebase/firestore";
 import { db, auth } from "../firebaseConfig";
 
-const db = getFirestore(app);
 
 export default function CronometroScreen() {
   const [tiempo, setTiempo] = useState(0);
