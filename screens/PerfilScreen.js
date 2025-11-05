@@ -60,13 +60,10 @@ const PerfilScreen = () => {
         const docSnap = await getDoc(docRef);
         if (docSnap.exists()) {
           updateUserData(docSnap.data());
-          console.log("✅ Perfil actualizado desde Firestore");
-        } else {
-          console.log("⚠️ No se encontró el documento del usuario.");
         }
       }
     } catch (error) {
-      console.error(" Error al refrescar perfil:", error);
+      console.error("Error al refrescar perfil:", error);
     }
     setRefreshing(false);
   };
@@ -77,9 +74,19 @@ const PerfilScreen = () => {
     }, [])
   );
 
-  const saveChanges = () => {
-    updateUserData(formData);
-    setIsEditing(false);
+  // 💾 Guardar cambios
+  const saveChanges = async () => {
+    try {
+      const user = auth.currentUser;
+      const userRef = doc(db, "usuarios", user.uid);
+      await updateDoc(userRef, formData);
+      updateUserData(formData);
+      Alert.alert("✅ Éxito", "Perfil actualizado correctamente");
+      setIsEditing(false);
+    } catch (error) {
+      console.error("Error al guardar cambios:", error);
+      Alert.alert("❌ Error", "No se pudo actualizar el perfil");
+    }
   };
 
   // 🚪 Cerrar sesión
@@ -88,11 +95,11 @@ const PerfilScreen = () => {
       await signOut(auth);
       navigation.replace("Login");
     } catch (error) {
-      console.error(" Error al cerrar sesión:", error);
+      console.error("Error al cerrar sesión:", error);
     }
   };
 
-  // 📸 Elegir imagen (cámara o galería)
+  // 📸 Elegir imagen
   const pickImage = async () => {
     Alert.alert(
       "Seleccionar imagen",
@@ -145,7 +152,6 @@ const PerfilScreen = () => {
     }
   };
 
-  // ☁️ Subir imagen a Firebase
   const uploadImageToFirebase = async (uri) => {
     try {
       setUploading(true);
@@ -173,8 +179,7 @@ const PerfilScreen = () => {
 
   if (!userData) {
     return (
-      <SafeAreaView style={[styles.safeArea, { backgroundColor: BACKGROUND }]}
-      edges={["right", "bottom", "left"]}>
+      <SafeAreaView style={styles.safeArea}>
         <Text style={{ textAlign: "center", marginTop: 50, color: TEXT_COLOR }}>
           Cargando perfil...
         </Text>
@@ -183,8 +188,7 @@ const PerfilScreen = () => {
   }
 
   return (
-    <SafeAreaView style={[styles.safeArea, { backgroundColor: BACKGROUND }]}
-    edges={["right", "bottom", "left"]}>
+    <SafeAreaView style={styles.safeArea}>
       <ScrollView
         contentContainerStyle={[styles.container, { paddingBottom: 120 }]}
         refreshControl={
@@ -197,18 +201,14 @@ const PerfilScreen = () => {
       >
         <Text style={[styles.header, { color: "#F1F5F9" }]}>Perfil</Text>
 
-        {/* Tarjeta de perfil */}
         <View style={styles.card}>
           <View style={styles.profileHeader}>
             <TouchableOpacity onPress={pickImage}>
               {userData.foto ? (
-                <Image
-                  source={{ uri: userData.foto }}
-                  style={styles.avatarImage}
-                />
+                <Image source={{ uri: userData.foto }} style={styles.avatarImage} />
               ) : (
                 <FeatherIcon
-                  name={userData.genero === "Hombre" ? "user" : "user-check"}
+                  name="user"
                   size={40}
                   color={GREEN}
                   style={styles.avatar}
@@ -216,9 +216,7 @@ const PerfilScreen = () => {
               )}
             </TouchableOpacity>
             <View>
-              <Text style={[styles.name, { color: "#F1F5F9" }]}>
-                {userData.nombre}
-              </Text>
+              <Text style={[styles.name, { color: "#F1F5F9" }]}>{userData.nombre}</Text>
               <Text style={styles.level}>Nivel: {userData.nivel}</Text>
             </View>
           </View>
@@ -234,7 +232,6 @@ const PerfilScreen = () => {
           </TouchableOpacity>
         </View>
 
-        {/* Datos físicos */}
         <View style={styles.card}>
           <Text style={styles.cardHeader}>Datos Físicos y Objetivos</Text>
           <ProfileItem icon="user" label="Género" value={userData.genero} />
@@ -245,12 +242,75 @@ const PerfilScreen = () => {
           <ProfileItem icon="maximize" label="Altura" value={`${userData.altura} cm`} />
         </View>
 
-        {/* Cerrar sesión */}
         <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
           <FeatherIcon name="log-out" size={20} color="#fff" />
           <Text style={styles.logoutText}>Cerrar sesión</Text>
         </TouchableOpacity>
       </ScrollView>
+
+      {/* ✏️ MODAL DE EDICIÓN */}
+      <Modal visible={isEditing} animationType="slide" transparent>
+        <View style={styles.modalContainer}>
+          <View style={styles.modalContent}>
+            <Text style={styles.modalTitle}>Editar Perfil</Text>
+
+            <TextInput
+              placeholder="Nombre"
+              placeholderTextColor="#9ca3af"
+              value={formData.nombre}
+              onChangeText={(text) => handleChange("nombre", text)}
+              style={styles.input}
+            />
+            <TextInput
+              placeholder="Edad"
+              placeholderTextColor="#9ca3af"
+              value={String(formData.edad || "")}
+              onChangeText={(text) => handleChange("edad", text)}
+              keyboardType="numeric"
+              style={styles.input}
+            />
+            <TextInput
+              placeholder="Peso (kg)"
+              placeholderTextColor="#9ca3af"
+              value={String(formData.peso || "")}
+              onChangeText={(text) => handleChange("peso", text)}
+              keyboardType="numeric"
+              style={styles.input}
+            />
+            <TextInput
+              placeholder="Altura (cm)"
+              placeholderTextColor="#9ca3af"
+              value={String(formData.altura || "")}
+              onChangeText={(text) => handleChange("altura", text)}
+              keyboardType="numeric"
+              style={styles.input}
+            />
+            <TextInput
+              placeholder="Objetivo"
+              placeholderTextColor="#9ca3af"
+              value={formData.objetivo}
+              onChangeText={(text) => handleChange("objetivo", text)}
+              style={styles.input}
+            />
+
+            <View style={styles.modalButtons}>
+              <TouchableOpacity
+                style={[styles.modalButton, { backgroundColor: GREEN }]}
+                onPress={saveChanges}
+              >
+                <Text style={styles.modalButtonText}>Guardar</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={[styles.modalButton, { backgroundColor: RED }]}
+                onPress={() => setIsEditing(false)}
+              >
+                <Text style={styles.modalButtonText}>Cancelar</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </SafeAreaView>
   );
 };
@@ -263,7 +323,6 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
     marginBottom: 20,
     textAlign: "center",
-    color: TEXT_COLOR,
   },
   card: {
     backgroundColor: "#1E293B",
@@ -271,11 +330,7 @@ const styles = StyleSheet.create({
     padding: 15,
     marginBottom: 20,
   },
-  profileHeader: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginBottom: 10,
-  },
+  profileHeader: { flexDirection: "row", alignItems: "center", marginBottom: 10 },
   avatar: {
     marginRight: 15,
     borderWidth: 2,
@@ -291,7 +346,7 @@ const styles = StyleSheet.create({
     borderColor: GREEN,
     marginRight: 15,
   },
-  name: { fontSize: 20, fontWeight: "bold", color: TEXT_COLOR },
+  name: { fontSize: 20, fontWeight: "bold" },
   level: { fontSize: 14, color: SUBTEXT },
   editButton: {
     backgroundColor: BLUE,
@@ -319,8 +374,8 @@ const styles = StyleSheet.create({
     borderBottomColor: "#334155",
   },
   itemContent: { flexDirection: "row", alignItems: "center" },
-  itemIcon: { marginRight: 10, width: 20 },
-  itemLabel: { fontSize: 16, color: TEXT_COLOR },
+  itemIcon: { marginRight: 10 },
+  itemLabel: { fontSize: 16 },
   itemValue: { fontSize: 16, fontWeight: "500", color: SUBTEXT },
   logoutButton: {
     flexDirection: "row",
@@ -337,6 +392,42 @@ const styles = StyleSheet.create({
     marginLeft: 10,
     fontSize: 16,
   },
+  // 🔹 Modal
+  modalContainer: {
+    flex: 1,
+    backgroundColor: "rgba(0,0,0,0.6)",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  modalContent: {
+    width: "85%",
+    backgroundColor: "#1E293B",
+    borderRadius: 15,
+    padding: 20,
+  },
+  modalTitle: {
+    color: GREEN,
+    fontSize: 20,
+    fontWeight: "bold",
+    marginBottom: 15,
+    textAlign: "center",
+  },
+  input: {
+    backgroundColor: "#334155",
+    borderRadius: 10,
+    padding: 10,
+    color: TEXT_COLOR,
+    marginBottom: 10,
+  },
+  modalButtons: { flexDirection: "row", justifyContent: "space-between", marginTop: 10 },
+  modalButton: {
+    flex: 1,
+    marginHorizontal: 5,
+    padding: 12,
+    borderRadius: 10,
+    alignItems: "center",
+  },
+  modalButtonText: { color: "#fff", fontWeight: "bold" },
 });
 
 export default PerfilScreen;
