@@ -248,24 +248,42 @@ const PerfilScreen = () => {
     </SafeAreaView>
   );
 };
+const BG = "#0F172A"; // fondo azul oscuro
+const TEXT = "#F1F5F9"; // texto principal claro
+const SUBTEXT = "#94A3B8"; // texto secundario gris-azulado
+const GREEN = "#22C55E"; // verde de acento
+const BLUE = "#2563EB"; // azul brillante para botones
+const RED = "#DC2626"; // rojo para cerrar sesión
 
 const styles = StyleSheet.create({
-  safeArea: { flex: 1 },
-  container: { padding: 20 },
+  safeArea: {
+    flex: 1,
+    backgroundColor: BG,
+  },
+  container: {
+    flex: 1,
+    padding: 20,
+    backgroundColor: BG,
+  },
   header: {
     fontSize: 24,
     fontWeight: "bold",
     marginBottom: 20,
     textAlign: "center",
+    color: TEXT,
   },
   card: {
-    backgroundColor: "#fff",
+    backgroundColor: "#1E293B",
     borderRadius: 12,
     padding: 15,
     marginBottom: 20,
     elevation: 2,
   },
-  profileHeader: { flexDirection: "row", alignItems: "center", marginBottom: 10 },
+  profileHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: 10,
+  },
   avatar: {
     marginRight: 15,
     borderWidth: 2,
@@ -273,23 +291,33 @@ const styles = StyleSheet.create({
     padding: 10,
     borderRadius: 50,
   },
-  name: { fontSize: 20, fontWeight: "bold" },
-  level: { fontSize: 14, color: "#666" },
+  name: {
+    fontSize: 20,
+    fontWeight: "bold",
+    color: TEXT,
+  },
+  level: {
+    fontSize: 14,
+    color: SUBTEXT,
+  },
   editButton: {
-    backgroundColor: "#f0f0f0",
+    backgroundColor: BLUE,
     padding: 10,
     borderRadius: 25,
     marginTop: 10,
     alignItems: "center",
   },
-  editButtonText: { color: GREEN, fontWeight: "600" },
+  editButtonText: {
+    color: TEXT,
+    fontWeight: "600",
+  },
   cardHeader: {
     fontSize: 18,
     fontWeight: "bold",
     marginBottom: 10,
     color: GREEN,
     borderBottomWidth: 1,
-    borderBottomColor: "#eee",
+    borderBottomColor: "#334155",
     paddingBottom: 5,
   },
   itemRow: {
@@ -298,23 +326,36 @@ const styles = StyleSheet.create({
     alignItems: "center",
     paddingVertical: 10,
     borderBottomWidth: 1,
-    borderBottomColor: "#f7f7f7",
+    borderBottomColor: "#334155",
   },
-  itemContent: { flexDirection: "row", alignItems: "center" },
-  itemIcon: { marginRight: 10, width: 20 },
-  itemLabel: { fontSize: 16 },
-  itemValue: { fontSize: 16, fontWeight: "500" },
+  itemContent: {
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  itemIcon: {
+    marginRight: 10,
+    width: 20,
+  },
+  itemLabel: {
+    fontSize: 16,
+    color: TEXT,
+  },
+  itemValue: {
+    fontSize: 16,
+    fontWeight: "500",
+    color: SUBTEXT,
+  },
   logoutButton: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "#DC2626", // rojo cierre sesión
+    backgroundColor: RED,
     padding: 15,
     borderRadius: 12,
     marginBottom: 30,
   },
   logoutText: {
-    color: "#fff",
+    color: TEXT,
     fontWeight: "bold",
     marginLeft: 10,
     fontSize: 16,
@@ -326,7 +367,7 @@ const styles = StyleSheet.create({
     backgroundColor: "rgba(0,0,0,0.5)",
   },
   modalContainer: {
-    backgroundColor: "white",
+    backgroundColor: "#1E293B",
     padding: 25,
     borderRadius: 15,
     width: "90%",
@@ -341,7 +382,9 @@ const styles = StyleSheet.create({
   },
   input: {
     borderWidth: 1,
-    borderColor: "#ccc",
+    borderColor: "#475569",
+    backgroundColor: "#0F172A",
+    color: TEXT,
     padding: 10,
     borderRadius: 10,
     marginBottom: 15,
@@ -350,8 +393,11 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     padding: 12,
     marginTop: 10,
+    backgroundColor: BLUE,
   },
-  modalButtonText: { color: "white", fontWeight: "bold", textAlign: "center" },
+  modalButtonText: {
+    color: TEXT,
+    fontWeight: "bold",
+    textAlign: "center",
+  },
 });
-
-export default PerfilScreen;
