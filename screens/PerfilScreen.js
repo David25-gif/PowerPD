@@ -233,7 +233,7 @@ const PerfilScreen = () => {
 };
 
 const styles = StyleSheet.create({
-  safeArea: { flex: 1, backgroundColor: "#0F172A" },
+  safeArea: { flex: 1, backgroundColor: "#f3f4f6" },
   container: { padding: 20 },
   header: {
     fontSize: 24,
