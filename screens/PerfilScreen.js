@@ -1,253 +1,357 @@
-import React, { useState, useEffect } from 'react';
-import { 
-  View, Text, TextInput, TouchableOpacity, StyleSheet, 
-  ScrollView, Alert, Dimensions, Modal 
-} from 'react-native';
-import { Picker } from '@react-native-picker/picker';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import { Ionicons } from '@expo/vector-icons';
+import React, { useContext, useState, useCallback } from "react";
+import {
+  View,
+  Text,
+  StyleSheet,
+  SafeAreaView,
+  TouchableOpacity,
+  Modal,
+  TextInput,
+  ScrollView,
+  RefreshControl,
+} from "react-native";
+import { useFocusEffect, useNavigation } from "@react-navigation/native";
+import { UserContext } from "../App";
+import FeatherIcon from "react-native-vector-icons/Feather";
+import { db, auth } from "../firebaseConfig";
+import { doc, getDoc } from "firebase/firestore";
+import { signOut } from "firebase/auth"; // 👈 Para cerrar sesión
 
-// 🎨 Paleta de colores
-const BG = '#0F172A';         // Fondo azul oscuro
-const BUTTON = '#1D4ED8';     // Azul brillante (botón principal)
-const BUTTON_ALT = '#3B82F6'; // Azul claro (sombra o acento)
-const TEXT = '#FFFFFF';       // Blanco
-const SUBTEXT = '#94A3B8';    // Gris azulado suave
+const GREEN = "#16a34a";
+const BACKGROUND = "#0F172A"; // 👈 Color de fondo personalizado
+const TEXT_COLOR = "#E2E8F0"; // 👈 Color de texto claro sobre fondo oscuro
 
-const INITIAL_PROFILE_DATA = {
-  nombre: 'Usuario Invitado',
-  genero: 'No especificado',
-  objetivo: 'Sin establecer',
-  nivelExperiencia: 'Nuevo',
-  edad: 0,
-  peso: 0,
-  altura: 0,
-};
+const ProfileItem = ({ icon, label, value }) => (
+  <View style={styles.itemRow}>
+    <View style={styles.itemContent}>
+      <FeatherIcon name={icon} size={20} color={GREEN} style={styles.itemIcon} />
+      <Text style={[styles.itemLabel, { color: TEXT_COLOR }]}>{label}</Text>
+    </View>
+    <Text style={[styles.itemValue, { color: TEXT_COLOR }]}>{value}</Text>
+  </View>
+);
 
-// ==========================================================
-// MODAL DE EDICIÓN
-// ==========================================================
-function EditProfileModal({ visible, onClose, profileData, onSave }) {
-  const [tempData, setTempData] = useState(profileData);
+const PerfilScreen = () => {
+  const { userData, updateUserData } = useContext(UserContext);
+  const [isEditing, setIsEditing] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
+  const navigation = useNavigation();
 
-  useEffect(() => {
-    setTempData(profileData);
-  }, [profileData]);
+  const [formData, setFormData] = useState({ ...userData });
 
   const handleChange = (field, value) => {
-    setTempData({ ...tempData, [field]: value });
+    setFormData((prev) => ({ ...prev, [field]: value }));
   };
 
-  const handleGuardar = () => {
-    if (!tempData.nombre.trim()) {
-      Alert.alert("Error", "El nombre no puede estar vacío");
-      return;
+  // 🔄 Refrescar datos desde Firestore
+  const handleRefresh = async () => {
+    setRefreshing(true);
+    try {
+      const user = auth.currentUser;
+      if (user) {
+        const docRef = doc(db, "usuarios", user.uid);
+        const docSnap = await getDoc(docRef);
+        if (docSnap.exists()) {
+          updateUserData(docSnap.data());
+          console.log("✅ Perfil actualizado desde Firestore");
+        } else {
+          console.log("⚠️ No se encontró el documento del usuario.");
+        }
+      }
+    } catch (error) {
+      console.error("❌ Error al refrescar perfil:", error);
     }
-    onSave({
-      ...tempData,
-      edad: parseInt(tempData.edad) || 0,
-      peso: parseFloat(tempData.peso) || 0,
-      altura: parseFloat(tempData.altura) || 0,
-    });
+    setRefreshing(false);
   };
 
-  return (
-    <Modal visible={visible} transparent animationType="fade">
-      <View style={stylesModal.modalBackground}>
-        <ScrollView contentContainerStyle={stylesModal.scrollContainer}>
-          <View style={stylesModal.editCard}>
-            <Text style={stylesModal.headerText}>Editar Perfil</Text>
-
-            <TextInput
-              style={stylesModal.input}
-              value={tempData.nombre}
-              onChangeText={(v) => handleChange('nombre', v)}
-              placeholder="Nombre"
-              placeholderTextColor={LIGHT}
-            />
-
-            <TextInput
-              style={stylesModal.input}
-              value={tempData.genero}
-              onChangeText={(v) => handleChange('genero', v)}
-              placeholder="Género"
-              placeholderTextColor={LIGHT}
-            />
-
-            <TextInput
-              style={stylesModal.input}
-              value={tempData.objetivo}
-              onChangeText={(v) => handleChange('objetivo', v)}
-              placeholder="Objetivo"
-              placeholderTextColor={LIGHT}
-            />
-
-            <TextInput
-              style={stylesModal.input}
-              value={tempData.nivelExperiencia}
-              onChangeText={(v) => handleChange('nivelExperiencia', v)}
-              placeholder="Nivel"
-              placeholderTextColor={LIGHT}
-            />
-
-            <TextInput
-              style={stylesModal.input}
-              value={String(tempData.edad)}
-              keyboardType="numeric"
-              onChangeText={(v) => handleChange('edad', v)}
-              placeholder="Edad"
-              placeholderTextColor={LIGHT}
-            />
-
-            <TextInput
-              style={stylesModal.input}
-              value={String(tempData.peso)}
-              keyboardType="numeric"
-              onChangeText={(v) => handleChange('peso', v)}
-              placeholder="Peso (kg)"
-              placeholderTextColor={LIGHT}
-            />
-
-            <TextInput
-              style={stylesModal.input}
-              value={String(tempData.altura)}
-              keyboardType="numeric"
-              onChangeText={(v) => handleChange('altura', v)}
-              placeholder="Altura (cm)"
-              placeholderTextColor={LIGHT}
-            />
-
-            <TouchableOpacity style={stylesModal.saveButton} onPress={handleGuardar}>
-              <Text style={stylesModal.saveButtonText}>Guardar Cambios</Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity style={stylesModal.cancelButton} onPress={onClose}>
-              <Text style={stylesModal.cancelButtonText}>Cancelar</Text>
-            </TouchableOpacity>
-          </View>
-        </ScrollView>
-      </View>
-    </Modal>
+  useFocusEffect(
+    useCallback(() => {
+      handleRefresh();
+    }, [])
   );
-}
 
-// ==========================================================
-// PANTALLA PRINCIPAL
-// ==========================================================
-export default function PerfilScreen() {
-  const [profileData, setProfileData] = useState(INITIAL_PROFILE_DATA);
-  const [modalVisible, setModalVisible] = useState(false);
-
-  useEffect(() => {
-    const load = async () => {
-      const data = await AsyncStorage.getItem('userProfile');
-      if (data) setProfileData(JSON.parse(data));
-    };
-    load();
-  }, []);
-
-  const saveProfile = async (data) => {
-    await AsyncStorage.setItem('userProfile', JSON.stringify(data));
-    setProfileData(data);
-    setModalVisible(false);
-    Alert.alert("Guardado", "Datos actualizados correctamente");
+  const saveChanges = () => {
+    updateUserData(formData);
+    setIsEditing(false);
   };
 
-  const logout = async () => {
-    await AsyncStorage.removeItem('userProfile');
-    setProfileData(INITIAL_PROFILE_DATA);
-    Alert.alert("Sesión cerrada", "Has salido correctamente");
+  // 🚪 Función para cerrar sesión
+  const handleLogout = async () => {
+    try {
+      await signOut(auth);
+      console.log("👋 Sesión cerrada correctamente");
+      navigation.replace("Login"); // 👈 Redirige al login (asegúrese de tener esta pantalla en el stack)
+    } catch (error) {
+      console.error("❌ Error al cerrar sesión:", error);
+    }
   };
+
+  if (!userData) {
+    return (
+      <SafeAreaView style={[styles.safeArea, { backgroundColor: BACKGROUND }]}>
+        <Text style={{ textAlign: "center", marginTop: 50, color: TEXT_COLOR }}>
+          Cargando perfil...
+        </Text>
+      </SafeAreaView>
+    );
+  }
 
   return (
-    <ScrollView style={styles.scroll}>
-      <View style={styles.container}>
-        <Text style={styles.headerTitle}>Hola, {profileData.nombre}</Text>
+    <SafeAreaView style={[styles.safeArea, { backgroundColor: BACKGROUND }]}>
+      <ScrollView
+        contentContainerStyle={styles.container}
+        refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} colors={[GREEN]} />
+        }
+      >
+        <Text style={[styles.header, { color: TEXT_COLOR }]}>
+          Bienvenido, {userData.nombre}
+        </Text>
 
+        {/* Tarjeta de perfil */}
         <View style={styles.card}>
-          <Text style={styles.sectionTitle}>Datos del Perfil</Text>
-          <Text style={styles.info}>Nombre: {profileData.nombre}</Text>
-          <Text style={styles.info}>Género: {profileData.genero}</Text>
-          <Text style={styles.info}>Objetivo: {profileData.objetivo}</Text>
-          <Text style={styles.info}>Nivel: {profileData.nivelExperiencia}</Text>
-          <Text style={styles.info}>Edad: {profileData.edad} años</Text>
-          <Text style={styles.info}>Peso: {profileData.peso} kg</Text>
-          <Text style={styles.info}>Altura: {profileData.altura} cm</Text>
+          <View style={styles.profileHeader}>
+            <FeatherIcon
+              name={userData.genero === "Hombre" ? "user" : "user-check"}
+              size={40}
+              color={GREEN}
+              style={styles.avatar}
+            />
+            <View>
+              <Text style={[styles.name, { color: "#111" }]}>{userData.nombre}</Text>
+              <Text style={styles.level}>Nivel: {userData.nivel}</Text>
+            </View>
+          </View>
 
-          <TouchableOpacity style={styles.button} onPress={() => setModalVisible(true)}>
-            <Ionicons name="create-outline" size={20} color={WHITE} />
-            <Text style={styles.buttonText}>Editar Perfil</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity style={styles.logoutButton} onPress={logout}>
-            <Ionicons name="exit-outline" size={20} color={WHITE} />
-            <Text style={styles.buttonText}>Cerrar Sesión</Text>
+          <TouchableOpacity
+            style={styles.editButton}
+            onPress={() => {
+              setFormData({ ...userData });
+              setIsEditing(true);
+            }}
+          >
+            <Text style={styles.editButtonText}>Editar Perfil</Text>
           </TouchableOpacity>
         </View>
 
-        <EditProfileModal
-          visible={modalVisible}
-          onClose={() => setModalVisible(false)}
-          profileData={profileData}
-          onSave={saveProfile}
-        />
-      </View>
-    </ScrollView>
+        {/* Datos físicos */}
+        <View style={styles.card}>
+          <Text style={styles.cardHeader}>Datos Físicos y Objetivos</Text>
+          <ProfileItem icon="user" label="Género" value={userData.genero} />
+          <ProfileItem icon="repeat" label="Objetivo" value={userData.objetivo} />
+          <ProfileItem icon="award" label="Nivel" value={userData.nivel} />
+          <ProfileItem icon="calendar" label="Edad" value={`${userData.edad} años`} />
+          <ProfileItem icon="package" label="Peso" value={`${userData.peso} kg`} />
+          <ProfileItem icon="maximize" label="Altura" value={`${userData.altura} cm`} />
+        </View>
+
+        {/* Ajustes */}
+        <View style={styles.card}>
+          <Text style={styles.cardHeader}>Ajustes</Text>
+          <View style={styles.itemRow}>
+            <View style={styles.itemContent}>
+              <FeatherIcon name="bell" size={20} color={GREEN} style={styles.itemIcon} />
+              <Text style={styles.itemLabel}>Notificaciones</Text>
+            </View>
+            <TouchableOpacity
+              onPress={() =>
+                updateUserData({
+                  ...userData,
+                  notificacionesActivas: !userData.notificacionesActivas,
+                })
+              }
+            >
+              <FeatherIcon
+                name={userData.notificacionesActivas ? "toggle-right" : "toggle-left"}
+                size={30}
+                color={userData.notificacionesActivas ? GREEN : "#ccc"}
+              />
+            </TouchableOpacity>
+          </View>
+        </View>
+
+        {/* 🚪 Botón de cierre de sesión */}
+        <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
+          <FeatherIcon name="log-out" size={20} color="#fff" />
+          <Text style={styles.logoutText}>Cerrar sesión</Text>
+        </TouchableOpacity>
+      </ScrollView>
+
+      {/* Modal de edición */}
+      <Modal visible={isEditing} animationType="slide" transparent={true}>
+        <View style={styles.modalOverlay}>
+          <ScrollView contentContainerStyle={styles.modalContainer}>
+            <Text style={styles.modalTitle}>Editar Perfil</Text>
+
+            <TextInput
+              style={styles.input}
+              value={formData.nombre}
+              onChangeText={(t) => handleChange("nombre", t)}
+              placeholder="Nombre"
+            />
+            <TextInput
+              style={styles.input}
+              value={formData.genero}
+              onChangeText={(t) => handleChange("genero", t)}
+              placeholder="Género (Hombre/Mujer)"
+            />
+            <TextInput
+              style={styles.input}
+              value={formData.objetivo}
+              onChangeText={(t) => handleChange("objetivo", t)}
+              placeholder="Objetivo"
+            />
+            <TextInput
+              style={styles.input}
+              value={formData.nivel}
+              onChangeText={(t) => handleChange("nivel", t)}
+              placeholder="Nivel"
+            />
+            <TextInput
+              style={styles.input}
+              keyboardType="numeric"
+              value={formData.edad?.toString()}
+              onChangeText={(t) => handleChange("edad", parseInt(t) || 0)}
+              placeholder="Edad"
+            />
+            <TextInput
+              style={styles.input}
+              keyboardType="numeric"
+              value={formData.peso?.toString()}
+              onChangeText={(t) => handleChange("peso", parseFloat(t) || 0)}
+              placeholder="Peso (kg)"
+            />
+            <TextInput
+              style={styles.input}
+              keyboardType="numeric"
+              value={formData.altura?.toString()}
+              onChangeText={(t) => handleChange("altura", parseFloat(t) || 0)}
+              placeholder="Altura (cm)"
+            />
+
+            <TouchableOpacity
+              style={[styles.modalButton, { backgroundColor: GREEN }]}
+              onPress={saveChanges}
+            >
+              <Text style={styles.modalButtonText}>Guardar Cambios</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={[styles.modalButton, { backgroundColor: "#999" }]}
+              onPress={() => setIsEditing(false)}
+            >
+              <Text style={styles.modalButtonText}>Cancelar</Text>
+            </TouchableOpacity>
+          </ScrollView>
+        </View>
+      </Modal>
+    </SafeAreaView>
   );
-}
+};
 
-// ==========================================================
-// ESTILOS
-// ==========================================================
 const styles = StyleSheet.create({
-  scroll: { flex: 1, backgroundColor: DARK },
+  safeArea: { flex: 1 },
   container: { padding: 20 },
-  headerTitle: { fontSize: 22, color: PRIMARY, fontWeight: 'bold', marginBottom: 20 },
-  card: { backgroundColor: MID, padding: 20, borderRadius: 10 },
-  sectionTitle: { fontSize: 18, color: LIGHT, marginBottom: 10, fontWeight: '600' },
-  info: { color: WHITE, fontSize: 16, marginBottom: 5 },
-  button: {
-    backgroundColor: PRIMARY,
-    padding: 12,
-    borderRadius: 8,
-    marginTop: 20,
-    flexDirection: 'row',
-    justifyContent: 'center',
-    gap: 8,
+  header: {
+    fontSize: 24,
+    fontWeight: "bold",
+    marginBottom: 20,
+    textAlign: "center",
   },
+  card: {
+    backgroundColor: "#fff",
+    borderRadius: 12,
+    padding: 15,
+    marginBottom: 20,
+    elevation: 2,
+  },
+  profileHeader: { flexDirection: "row", alignItems: "center", marginBottom: 10 },
+  avatar: {
+    marginRight: 15,
+    borderWidth: 2,
+    borderColor: GREEN,
+    padding: 10,
+    borderRadius: 50,
+  },
+  name: { fontSize: 20, fontWeight: "bold" },
+  level: { fontSize: 14, color: "#666" },
+  editButton: {
+    backgroundColor: "#f0f0f0",
+    padding: 10,
+    borderRadius: 25,
+    marginTop: 10,
+    alignItems: "center",
+  },
+  editButtonText: { color: GREEN, fontWeight: "600" },
+  cardHeader: {
+    fontSize: 18,
+    fontWeight: "bold",
+    marginBottom: 10,
+    color: GREEN,
+    borderBottomWidth: 1,
+    borderBottomColor: "#eee",
+    paddingBottom: 5,
+  },
+  itemRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    paddingVertical: 10,
+    borderBottomWidth: 1,
+    borderBottomColor: "#f7f7f7",
+  },
+  itemContent: { flexDirection: "row", alignItems: "center" },
+  itemIcon: { marginRight: 10, width: 20 },
+  itemLabel: { fontSize: 16 },
+  itemValue: { fontSize: 16, fontWeight: "500" },
   logoutButton: {
-    backgroundColor: LOGOUT_COLOR,
-    padding: 12,
-    borderRadius: 8,
-    marginTop: 15,
-    flexDirection: 'row',
-    justifyContent: 'center',
-    gap: 8,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "#DC2626", // rojo cierre sesión
+    padding: 15,
+    borderRadius: 12,
+    marginBottom: 30,
   },
-  buttonText: { color: WHITE, fontWeight: 'bold' },
+  logoutText: {
+    color: "#fff",
+    fontWeight: "bold",
+    marginLeft: 10,
+    fontSize: 16,
+  },
+  modalOverlay: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "rgba(0,0,0,0.5)",
+  },
+  modalContainer: {
+    backgroundColor: "white",
+    padding: 25,
+    borderRadius: 15,
+    width: "90%",
+    marginTop: 60,
+  },
+  modalTitle: {
+    fontSize: 20,
+    fontWeight: "bold",
+    marginBottom: 20,
+    color: GREEN,
+    textAlign: "center",
+  },
+  input: {
+    borderWidth: 1,
+    borderColor: "#ccc",
+    padding: 10,
+    borderRadius: 10,
+    marginBottom: 15,
+  },
+  modalButton: {
+    borderRadius: 10,
+    padding: 12,
+    marginTop: 10,
+  },
+  modalButtonText: { color: "white", fontWeight: "bold", textAlign: "center" },
 });
 
-// ==========================================================
-// ESTILOS MODAL
-// ==========================================================
-const stylesModal = StyleSheet.create({
-  modalBackground: {
-    flex: 1, backgroundColor: 'rgba(0,0,0,0.6)', justifyContent: 'center', alignItems: 'center'
-  },
-  scrollContainer: { flexGrow: 1, justifyContent: 'center', paddingVertical: 20 },
-  editCard: { backgroundColor: MID, padding: 20, borderRadius: 10, width: '85%' },
-  headerText: { fontSize: 18, color: PRIMARY, textAlign: 'center', marginBottom: 15 },
-  input: {
-    backgroundColor: INPUT_BACKGROUND,
-    color: LIGHT,
-    padding: 12,
-    borderRadius: 8,
-    marginBottom: 10,
-    borderColor: PRIMARY,
-    borderWidth: 1,
-  },
-  saveButton: { backgroundColor: PRIMARY, padding: 12, borderRadius: 8, marginTop: 10 },
-  saveButtonText: { color: WHITE, fontWeight: 'bold', textAlign: 'center' },
-  cancelButton: { backgroundColor: CANCEL_COLOR, padding: 12, borderRadius: 8, marginTop: 10 },
-  cancelButtonText: { color: WHITE, fontWeight: 'bold', textAlign: 'center' },
-});
+export default PerfilScreen;
