@@ -17,7 +17,6 @@ import { db, auth } from "../firebaseConfig";
 import { doc, getDoc } from "firebase/firestore";
 import { signOut } from "firebase/auth"; // 👈 Para cerrar sesión
 
-const GREEN = "#16a34a";
 const BACKGROUND = "#0F172A"; // 👈 Color de fondo personalizado
 const TEXT_COLOR = "#E2E8F0"; // 👈 Color de texto claro sobre fondo oscuro
 
