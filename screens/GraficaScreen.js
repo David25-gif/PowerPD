@@ -2,7 +2,13 @@ import React, { useEffect, useState } from "react";
 import { View, Text, Dimensions, ScrollView } from "react-native";
 import { BarChart } from "react-native-chart-kit";
 import { db, auth } from "../firebaseConfig";
-import { doc, onSnapshot } from "firebase/firestore";
+import {
+  collection,
+  query,
+  where,
+  onSnapshot,
+  orderBy,
+} from "firebase/firestore";
 import { onAuthStateChanged } from "firebase/auth";
 
 const screenWidth = Dimensions.get("window").width;
@@ -15,68 +21,71 @@ export default function GraficaScreen() {
   const [totalSesiones, setTotalSesiones] = useState(0);
 
   useEffect(() => {
-    // Esperar a que el usuario esté autenticado
     const unsubscribeAuth = onAuthStateChanged(auth, (user) => {
       if (user) setUserId(user.uid);
       else setUserId(null);
     });
-
     return unsubscribeAuth;
   }, []);
 
   useEffect(() => {
     if (!userId) return;
 
-    const userDocRef = doc(db, "usuarios", userId);
+    const progresosRef = collection(db, "progresos");
+    const q = query(progresosRef, where("userId", "==", userId), orderBy("fecha", "asc"));
 
-    const unsubscribe = onSnapshot(userDocRef, (userDocSnap) => {
-      if (userDocSnap.exists()) {
-        const entrenamientos = userDocSnap.data().entrenamientos || [];
-
-        const minutosPorDia = {};
-        let totalMinutos = 0;
-        let totalCal = 0;
-
-        entrenamientos.forEach((ent) => {
-          const fecha = ent.fecha || "Sin fecha";
-
-          if (ent.duracion) {
-            const [h, m, s] = ent.duracion.split(":").map(Number);
-            const minutos = h * 60 + m + s / 60;
-            minutosPorDia[fecha] = (minutosPorDia[fecha] || 0) + minutos;
-            totalMinutos += minutos;
-          }
-          totalCal += ent.calorias || 0;
-        });
-
-        const labels = Object.keys(minutosPorDia);
-        const values = Object.values(minutosPorDia).map((v) =>
-          parseFloat(v.toFixed(1))
-        );
-
-        setData({
-          labels,
-          datasets: [{ data: values }],
-        });
-        setTotalCalorias(totalCal.toFixed(1));
-        setTotalTiempo(totalMinutos.toFixed(1));
-        setTotalSesiones(entrenamientos.length);
-      } else {
-        console.log("⚠️ No existe el usuario en Firestore");
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      if (snapshot.empty) {
+        setData(null);
+        setTotalCalorias(0);
+        setTotalTiempo(0);
+        setTotalSesiones(0);
+        return;
       }
+
+      const registros = snapshot.docs.map((doc) => doc.data());
+      const minutosPorDia = {};
+      let totalMinutos = 0;
+      let totalCal = 0;
+
+      registros.forEach((reg) => {
+        let fechaSoloDia = "Sin fecha";
+        if (reg.fecha && typeof reg.fecha.toDate === "function") {
+          const fecha = reg.fecha.toDate();
+          if (!isNaN(fecha)) {
+            fechaSoloDia = fecha.toISOString().split("T")[0];
+          }
+        }
+
+        // ✅ `tiempo` ya está en minutos decimales
+        const minutos = parseFloat(reg.tiempo || 0);
+        minutosPorDia[fechaSoloDia] =
+          (minutosPorDia[fechaSoloDia] || 0) + minutos;
+
+        totalMinutos += minutos;
+        totalCal += reg.calorias || 0;
+      });
+
+      const labels = Object.keys(minutosPorDia);
+      const values = Object.values(minutosPorDia).map((v) =>
+        parseFloat(v.toFixed(2))
+      );
+
+      setData({
+        labels,
+        datasets: [{ data: values }],
+      });
+
+      setTotalCalorias(totalCal.toFixed(1));
+      setTotalTiempo(totalMinutos.toFixed(1));
+      setTotalSesiones(registros.length);
     });
 
     return () => unsubscribe();
   }, [userId]);
 
   return (
-    <ScrollView
-      style={{
-        flex: 1,
-        backgroundColor: "#0d1117",
-        paddingHorizontal: 10,
-      }}
-    >
+    <ScrollView style={{ flex: 1, backgroundColor: "#0d1117", paddingHorizontal: 10 }}>
       <Text
         style={{
           textAlign: "center",
@@ -123,7 +132,6 @@ export default function GraficaScreen() {
         </Text>
       )}
 
-      {/* Círculos de resumen */}
       <View
         style={{
           flexDirection: "row",
@@ -131,57 +139,44 @@ export default function GraficaScreen() {
           marginBottom: 50,
         }}
       >
-        <View
-          style={{
-            backgroundColor: "#1f2937",
-            width: 100,
-            height: 100,
-            borderRadius: 50,
-            alignItems: "center",
-            justifyContent: "center",
-          }}
-        >
+        <View style={circleStyle}>
           <Text style={{ color: "#00ff6a", fontSize: 18 }}>🔥</Text>
-          <Text style={{ color: "white", fontSize: 16, fontWeight: "bold" }}>
-            {totalCalorias}
-          </Text>
-          <Text style={{ color: "#9ca3af", fontSize: 12 }}>kcal</Text>
+          <Text style={circleValue}>{totalCalorias}</Text>
+          <Text style={circleLabel}>kcal</Text>
         </View>
 
-        <View
-          style={{
-            backgroundColor: "#1f2937",
-            width: 100,
-            height: 100,
-            borderRadius: 50,
-            alignItems: "center",
-            justifyContent: "center",
-          }}
-        >
+        <View style={circleStyle}>
           <Text style={{ color: "#00ff6a", fontSize: 18 }}>⏱️</Text>
-          <Text style={{ color: "white", fontSize: 16, fontWeight: "bold" }}>
-            {totalTiempo}
-          </Text>
-          <Text style={{ color: "#9ca3af", fontSize: 12 }}>min</Text>
+          <Text style={circleValue}>{totalTiempo}</Text>
+          <Text style={circleLabel}>min</Text>
         </View>
 
-        <View
-          style={{
-            backgroundColor: "#1f2937",
-            width: 100,
-            height: 100,
-            borderRadius: 50,
-            alignItems: "center",
-            justifyContent: "center",
-          }}
-        >
+        <View style={circleStyle}>
           <Text style={{ color: "#00ff6a", fontSize: 18 }}>💪</Text>
-          <Text style={{ color: "white", fontSize: 16, fontWeight: "bold" }}>
-            {totalSesiones}
-          </Text>
-          <Text style={{ color: "#9ca3af", fontSize: 12 }}>sesiones</Text>
+          <Text style={circleValue}>{totalSesiones}</Text>
+          <Text style={circleLabel}>sesiones</Text>
         </View>
       </View>
     </ScrollView>
   );
 }
+
+const circleStyle = {
+  backgroundColor: "#1f2937",
+  width: 100,
+  height: 100,
+  borderRadius: 50,
+  alignItems: "center",
+  justifyContent: "center",
+};
+
+const circleValue = {
+  color: "white",
+  fontSize: 16,
+  fontWeight: "bold",
+};
+
+const circleLabel = {
+  color: "#9ca3af",
+  fontSize: 12,
+};

@@ -1,14 +1,13 @@
 import React, { useState, useRef, useEffect } from "react";
 import { View, Text, TouchableOpacity, StyleSheet, Alert, Animated } from "react-native";
-import { getFirestore, collection, addDoc, serverTimestamp } from "firebase/firestore";
+import { collection, addDoc, serverTimestamp } from "firebase/firestore";
 import { db, auth } from "../firebaseConfig";
-
 
 export default function CronometroScreen() {
   const [tiempo, setTiempo] = useState(0);
   const [activo, setActivo] = useState(false);
   const intervaloRef = useRef(null);
-  const fadeAnim = useRef(new Animated.Value(0)).current; // para la animación del mensaje
+  const fadeAnim = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
     if (activo) {
@@ -30,9 +29,7 @@ export default function CronometroScreen() {
       .padStart(2, "0")}:${s.toString().padStart(2, "0")}`;
   };
 
-  const manejarInicioPausa = () => {
-    setActivo(!activo);
-  };
+  const manejarInicioPausa = () => setActivo(!activo);
 
   const manejarReinicio = () => {
     setActivo(false);
@@ -55,13 +52,15 @@ export default function CronometroScreen() {
         return;
       }
 
-      const calorias = (tiempo / 60) * 8; // cálculo simple: 8 kcal por minuto aprox.
+      // 🔹 Convertir segundos a minutos (con decimales)
+      const minutos = tiempo / 60;
+      const calorias = minutos * 8; // 8 kcal/minuto aprox.
 
       await addDoc(collection(db, "progresos"), {
         userId: user.uid,
-        tiempo,
+        tiempo: minutos, // guardamos en minutos para la gráfica
         calorias,
-        fecha: serverTimestamp(),
+        fecha: serverTimestamp(), // 🔹 Timestamp oficial de Firebase
       });
 
       manejarReinicio();
@@ -97,7 +96,6 @@ export default function CronometroScreen() {
         </TouchableOpacity>
       </View>
 
-      {/* ✅ Animación de guardado */}
       <Animated.View style={[styles.mensajeExito, { opacity: fadeAnim }]}>
         <Text style={styles.mensajeTexto}>✅ Progreso guardado con éxito</Text>
       </Animated.View>
