@@ -188,7 +188,7 @@ export default function CalendarioScreen() {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: "#0f172a", padding: 10 },
   title: {
-    color: "#22c55e",
+    color: "#00D0FF",
     fontSize: 22,
     fontWeight: "bold",
     textAlign: "center",

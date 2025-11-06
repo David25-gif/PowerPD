@@ -101,7 +101,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   title: {
-    color: "white",
+    color: "#00D0FF",
     fontSize: 28,
     fontWeight: "bold",
     marginVertical: 20,

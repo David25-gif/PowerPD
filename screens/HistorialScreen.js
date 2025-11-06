@@ -151,7 +151,7 @@ export default function HistorialScreen() {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: "#0f172a", padding: 20 },
   title: {
-    color: "#22c55e",
+    color: "#00D0FF",
     fontSize: 24,
     fontWeight: "bold",
     textAlign: "center",

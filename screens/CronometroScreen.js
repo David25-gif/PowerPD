@@ -114,7 +114,7 @@ const styles = StyleSheet.create({
   titulo: {
     fontSize: 26,
     fontWeight: "bold",
-    color: "#00C851",
+    color: "#00D0FF",
     marginBottom: 30,
   },
   timerContainer: {
