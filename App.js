@@ -15,7 +15,13 @@ import RegistroScreen from "./screens/RegistroScreen";
 import GenderScreen from "./screens/GenderScreen";
 import EdadPesoScreen from "./screens/EdadPesoScreen";
 import HomeTabs from "./screens/HomeTabs";
-import PerfilScreen from './screens/PerfilScreen';
+
+
+import CronometroScreen from "./screens/CronometroScreen";
+import HistorialScreen from "./screens/HistorialScreen";
+import GraficaScreen from "./screens/GraficaScreen";
+import CalendarioScreen from "./screens/CalendarioScreen";
+import ProgresoScreen from "./screens/ProgresoScreen";
 
 
 

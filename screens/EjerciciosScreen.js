@@ -1,71 +1,58 @@
 import React, { useEffect, useState } from "react";
-import { View, Text, FlatList, Image, TouchableOpacity, StyleSheet, ActivityIndicator } from "react-native";
-import { getBodyParts, getExercisesByBodyPart } from "../services/exerciseApi";
+import {
+  View,
+  Text,
+  FlatList,
+  Image,
+  StyleSheet,
+  ActivityIndicator,
+  ScrollView,
+} from "react-native";
+import { getExercisesByBodyPart } from "../services/exerciseApi";
 
-const EjerciciosScreen = () => {
-  const [bodyParts, setBodyParts] = useState([]);
-  const [selectedPart, setSelectedPart] = useState(null);
+// 🇪🇸 Traducciones
+const bodyPartNames = {
+  chest: "Pecho",
+  back: "Espalda",
+  "upper legs": "Piernas",
+  "upper arms": "Brazos",
+  waist: "Abdominales",
+  cardio: "Cardio",
+};
+
+const EjerciciosScreen = ({ route }) => {
+  const { bodyPart } = route.params || {};
   const [exercises, setExercises] = useState([]);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
 
-  // 🔹 Cargar las partes del cuerpo al iniciar
+  const translatedPart = bodyPartNames[bodyPart] || bodyPart;
+
   useEffect(() => {
-    const fetchParts = async () => {
-      try {
-        const parts = await getBodyParts();
-        setBodyParts(parts);
-      } catch (err) {
-        console.error("Error cargando partes del cuerpo:", err);
-      }
-    };
-    fetchParts();
-  }, []);
+    if (bodyPart) fetchExercises(bodyPart);
+  }, [bodyPart]);
 
-  // 🔹 Cargar los ejercicios cuando se selecciona una parte
-  const handleSelectPart = async (part) => {
+  const fetchExercises = async (partName) => {
     try {
-      setSelectedPart(part);
       setLoading(true);
-      const data = await getExercisesByBodyPart(part.original);
+      const data = await getExercisesByBodyPart(partName);
       setExercises(data);
     } catch (err) {
-      console.error("Error cargando ejercicios:", err);
+      console.error("❌ Error cargando ejercicios:", err);
     } finally {
       setLoading(false);
     }
   };
 
-  // 🔹 Render de cada parte del cuerpo
-  const renderBodyPart = ({ item }) => (
-    <TouchableOpacity
-      style={[
-        styles.bodyPartButton,
-        selectedPart?.original === item.original && styles.selectedButton,
-      ]}
-      onPress={() => handleSelectPart(item)}
-    >
-      <Text style={styles.bodyPartText}>{item.translated}</Text>
-    </TouchableOpacity>
-  );
-
-  // 🔹 Render de cada ejercicio
   const renderExercise = ({ item }) => (
-    <View style={styles.exerciseCard}>
-      <Image
-        source={{ uri: item.gifUrl }}
-        style={styles.exerciseImage}
-        resizeMode="cover"
-      />
-      <View style={styles.exerciseInfo}>
+    <View style={styles.card}>
+      <Image source={{ uri: item.gifUrl }} style={styles.image} />
+      <View style={styles.cardContent}>
         <Text style={styles.exerciseName}>{item.name}</Text>
-        <Text style={styles.exerciseDetail}>
+        <Text style={styles.detail}>
           🎯 <Text style={styles.label}>Objetivo:</Text> {item.target}
         </Text>
-        <Text style={styles.exerciseDetail}>
+        <Text style={styles.detail}>
           🦾 <Text style={styles.label}>Equipo:</Text> {item.equipment}
-        </Text>
-        <Text style={styles.exerciseDetail}>
-          💪 <Text style={styles.label}>Parte del cuerpo:</Text> {item.bodyPart}
         </Text>
 
         {item.instructions && item.instructions.length > 0 && (
@@ -84,38 +71,25 @@ const EjerciciosScreen = () => {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Selecciona una zona del cuerpo</Text>
-
-      {bodyParts.length === 0 ? (
-        <ActivityIndicator size="large" color="#f97316" style={{ marginTop: 40 }} />
-      ) : (
-        <FlatList
-          data={bodyParts}
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          keyExtractor={(item) => item.original}
-          renderItem={renderBodyPart}
-          contentContainerStyle={styles.bodyPartList}
-        />
-      )}
-
-      <View style={styles.separator} />
+      {/* 🔹 Título limpio debajo del header */}
+      <Text style={styles.screenTitle}>
+        Ejercicios de {translatedPart?.toUpperCase()}
+      </Text>
 
       {loading ? (
-        <ActivityIndicator size="large" color="#f97316" style={{ marginTop: 20 }} />
-      ) : selectedPart ? (
-        exercises.length > 0 ? (
-          <FlatList
-            data={exercises}
-            keyExtractor={(item) => item.id}
-            renderItem={renderExercise}
-            contentContainerStyle={styles.exerciseList}
-          />
-        ) : (
-          <Text style={styles.noExercises}>No se encontraron ejercicios para esta zona.</Text>
-        )
+        <ActivityIndicator
+          size="large"
+          color="#f97316"
+          style={{ marginTop: 40 }}
+        />
       ) : (
-        <Text style={styles.helperText}>Selecciona una parte del cuerpo para ver ejercicios</Text>
+        <FlatList
+          data={exercises}
+          keyExtractor={(item) => item.id}
+          renderItem={renderExercise}
+          contentContainerStyle={styles.list}
+          showsVerticalScrollIndicator={false}
+        />
       )}
     </View>
   );
@@ -126,93 +100,63 @@ export default EjerciciosScreen;
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#fff",
-    paddingTop: 50,
-    paddingHorizontal: 16,
+    backgroundColor: "#0A1520",
+    paddingTop: 15,
+    paddingHorizontal: 14,
   },
-  title: {
+  screenTitle: {
+    color: "#f97316",
     fontSize: 22,
     fontWeight: "bold",
-    marginBottom: 12,
-    color: "#f97316",
     textAlign: "center",
+    marginVertical: 20,
+    textTransform: "uppercase",
   },
-  bodyPartList: {
-    paddingVertical: 10,
+  list: {
+    paddingBottom: 100,
   },
-  bodyPartButton: {
-    backgroundColor: "#e5e7eb",
-    paddingVertical: 10,
-    paddingHorizontal: 18,
-    borderRadius: 20,
-    marginHorizontal: 5,
-  },
-  selectedButton: {
-    backgroundColor: "#f97316",
-  },
-  bodyPartText: {
-    color: "#111827",
-    fontWeight: "bold",
-  },
-  separator: {
-    height: 1,
-    backgroundColor: "#ddd",
-    marginVertical: 15,
-  },
-  exerciseList: {
-    paddingBottom: 80,
-  },
-  exerciseCard: {
-    flexDirection: "row",
-    backgroundColor: "#f9fafb",
-    borderRadius: 12,
-    marginBottom: 15,
-    elevation: 3,
+  card: {
+    backgroundColor: "#14212E",
+    borderRadius: 16,
+    marginBottom: 20,
+    overflow: "hidden",
+    elevation: 4,
     shadowColor: "#000",
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 6,
+    shadowOffset: { width: 0, height: 3 },
   },
-  exerciseImage: {
-    width: 120,
-    height: 120,
-    borderTopLeftRadius: 12,
-    borderBottomLeftRadius: 12,
+  image: {
+    width: "100%",
+    height: 220,
+    resizeMode: "cover",
   },
-  exerciseInfo: {
-    flex: 1,
-    padding: 10,
+  cardContent: {
+    padding: 14,
   },
   exerciseName: {
-    fontSize: 16,
+    color: "#fff",
+    fontSize: 18,
     fontWeight: "bold",
-    color: "#111827",
+    marginBottom: 8,
+    textTransform: "capitalize",
+  },
+  detail: {
+    color: "#e5e7eb",
+    fontSize: 14,
     marginBottom: 4,
   },
-  exerciseDetail: {
-    fontSize: 14,
-    color: "#4b5563",
-  },
   label: {
-    fontWeight: "600",
     color: "#f97316",
+    fontWeight: "600",
   },
   instructionsContainer: {
-    marginTop: 6,
+    marginTop: 10,
   },
   instructionStep: {
+    color: "#d1d5db",
     fontSize: 13,
-    color: "#374151",
     marginLeft: 10,
-  },
-  noExercises: {
-    textAlign: "center",
-    color: "#6b7280",
-    marginTop: 20,
-  },
-  helperText: {
-    textAlign: "center",
-    color: "#6b7280",
-    marginTop: 20,
+    marginTop: 2,
   },
 });

@@ -3,7 +3,7 @@ import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert, Platform } 
 import { Ionicons } from '@expo/vector-icons';
 import { signInWithEmailAndPassword } from "firebase/auth";
 import { auth, db } from "../firebaseConfig";
-import { doc, getDoc } from 'firebase/firestore';
+import { doc, getDoc, enableNetwork, disableNetwork } from 'firebase/firestore';
 
 export default function LoginScreen({ navigation }) {
   const [email, setEmail] = useState('');
@@ -25,6 +25,9 @@ export default function LoginScreen({ navigation }) {
     }
 
     try {
+      // 🔹 Asegura conexión activa con Firestore antes de loguear
+      await enableNetwork(db).catch(() => console.log("⚠️ Firestore ya estaba online."));
+
       const userCredential = await signInWithEmailAndPassword(auth, email, password);
       const user = userCredential.user;
 
@@ -32,9 +35,20 @@ export default function LoginScreen({ navigation }) {
 
       const uid = user.uid;
       const docRef = doc(db, "usuarios", uid);
-      const docSnap = await getDoc(docRef);
+
+      let docSnap;
+      try {
+        // 🔹 Intenta obtener el documento del perfil
+        docSnap = await getDoc(docRef);
+      } catch (networkError) {
+        console.log("⚠️ Error de red, reintentando conexión...");
+        await enableNetwork(db); // vuelve a habilitar conexión
+        docSnap = await getDoc(docRef);
+      }
+
       const perfil = docSnap.exists() ? docSnap.data() : {};
 
+      // 🔹 Redirección según el perfil
       if (!perfil.genero) {
         navigation.replace("Genero");
       } else if (!perfil.edad || !perfil.peso) {
@@ -44,7 +58,7 @@ export default function LoginScreen({ navigation }) {
       }
 
     } catch (error) {
-      console.log("Error al iniciar sesión:", error.code);
+      console.log("❌ Error al iniciar sesión:", error.code);
       switch (error.code) {
         case 'auth/invalid-email':
           mostrarAlerta('Correo inválido', 'El formato del correo no es correcto.');
@@ -54,6 +68,9 @@ export default function LoginScreen({ navigation }) {
           break;
         case 'auth/wrong-password':
           mostrarAlerta('Contraseña incorrecta', 'La contraseña ingresada no es válida.');
+          break;
+        case 'unavailable':
+          mostrarAlerta('Sin conexión', 'Parece que no hay conexión con Firestore. Intenta nuevamente.');
           break;
         default:
           mostrarAlerta('Error', 'No se pudo iniciar sesión. Intenta más tarde.');
@@ -113,7 +130,7 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#0F172A', // azul oscuro
+    backgroundColor: '#0F172A',
     padding: 20,
   },
   title: {
@@ -150,7 +167,7 @@ const styles = StyleSheet.create({
   },
   button: {
     width: '80%',
-    backgroundColor: '#1D4ED8', // azul brillante
+    backgroundColor: '#1D4ED8',
     paddingVertical: 12,
     borderRadius: 10,
     alignItems: 'center',
@@ -162,7 +179,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
   },
   registerButton: {
-    backgroundColor: '#3B82F6', // azul más claro
+    backgroundColor: '#3B82F6',
   },
   text: {
     color: '#94A3B8',
