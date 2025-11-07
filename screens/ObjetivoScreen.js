@@ -2,8 +2,16 @@ import React, { useState, useContext } from "react";
 import { View, Text, TouchableOpacity, StyleSheet } from "react-native";
 import { UserContext } from "../App";
 
+// 🎯 Datos
 const objetivos = ["Tonificar", "Perder peso", "Ganar músculo"];
 const niveles = ["Principiante", "Intermedio", "Avanzado"];
+
+// 🎨 Paleta azul
+const BG = "#0F172A";         // Fondo azul oscuro
+const BUTTON = "#1D4ED8";     // Azul brillante
+const BUTTON_ALT = "#3B82F6"; // Azul claro (sombra/acento)
+const TEXT = "#FFFFFF";       // Blanco
+const SUBTEXT = "#94A3B8";    // Gris azulado suave
 
 const ObjetivoScreen = ({ navigation }) => {
   const { updateUserData } = useContext(UserContext);
@@ -73,7 +81,7 @@ export default ObjetivoScreen;
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#f3f4f6",
+    backgroundColor: BG,
     alignItems: "center",
     justifyContent: "center",
     paddingHorizontal: 20,
@@ -82,37 +90,47 @@ const styles = StyleSheet.create({
     fontSize: 20,
     fontWeight: "bold",
     marginBottom: 10,
-    color: "#16a34a",
+    color: TEXT,
   },
   option: {
     width: "100%",
     padding: 12,
     borderWidth: 1,
-    borderColor: "#d1d5db",
+    borderColor: BUTTON_ALT,
     borderRadius: 10,
     marginVertical: 5,
-    backgroundColor: "#fff",
+    backgroundColor: BG,
+    shadowColor: BUTTON_ALT,
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.3,
+    shadowRadius: 6,
+    elevation: 5,
   },
   optionSelected: {
-    backgroundColor: "#16a34a",
+    backgroundColor: BUTTON,
   },
   optionText: {
     textAlign: "center",
-    color: "#374151",
+    color: SUBTEXT,
   },
   optionTextSelected: {
-    color: "#fff",
+    color: TEXT,
     fontWeight: "bold",
   },
   button: {
-    backgroundColor: "#16a34a",
+    backgroundColor: BUTTON,
     marginTop: 30,
     paddingVertical: 12,
     paddingHorizontal: 40,
     borderRadius: 10,
+    shadowColor: BUTTON_ALT,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.4,
+    shadowRadius: 6,
+    elevation: 8,
   },
   buttonText: {
-    color: "#fff",
+    color: TEXT,
     fontWeight: "600",
     fontSize: 16,
   },
