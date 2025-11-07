@@ -6,9 +6,12 @@ import {
   Image,
   StyleSheet,
   ActivityIndicator,
-  ScrollView,
+  TouchableOpacity,
+  Alert,
 } from "react-native";
 import { getExercisesByBodyPart } from "../services/exerciseApi";
+import { db, auth } from "../firebaseConfig";
+import { addDoc, collection, serverTimestamp } from "firebase/firestore";
 
 // 🇪🇸 Traducciones
 const bodyPartNames = {
@@ -24,6 +27,7 @@ const EjerciciosScreen = ({ route }) => {
   const { bodyPart } = route.params || {};
   const [exercises, setExercises] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [savingId, setSavingId] = useState(null); // 👉 saber cuál rutina se está guardando
 
   const translatedPart = bodyPartNames[bodyPart] || bodyPart;
 
@@ -40,6 +44,31 @@ const EjerciciosScreen = ({ route }) => {
       console.error("❌ Error cargando ejercicios:", err);
     } finally {
       setLoading(false);
+    }
+  };
+
+  // ✅ Guardar rutina en Firestore
+  const guardarRutinaEnFirebase = async (exerciseName) => {
+    const user = auth.currentUser;
+    if (!user) {
+      Alert.alert("Error", "Debes iniciar sesión para guardar el progreso.");
+      return;
+    }
+
+    try {
+      setSavingId(exerciseName);
+      await addDoc(collection(db, "progresos"), {
+        userId: user.uid,
+        fecha: serverTimestamp(),
+        parteCuerpo: translatedPart,
+        nombreRutina: exerciseName,
+      });
+      Alert.alert("✅ Éxito", `La rutina "${exerciseName}" fue guardada.`);
+    } catch (error) {
+      console.error("Error guardando rutina:", error);
+      Alert.alert("Error", "No se pudo guardar el entrenamiento.");
+    } finally {
+      setSavingId(null);
     }
   };
 
@@ -65,13 +94,26 @@ const EjerciciosScreen = ({ route }) => {
             ))}
           </View>
         )}
+
+        {/* 🔸 Botón individual de rutina */}
+        <TouchableOpacity
+          style={[
+            styles.startButton,
+            savingId === item.name && { opacity: 0.6 },
+          ]}
+          onPress={() => guardarRutinaEnFirebase(item.name)}
+          disabled={savingId === item.name}
+        >
+          <Text style={styles.startButtonText}>
+            {savingId === item.name ? "Guardando..." : "🏁 Comenzar Rutina"}
+          </Text>
+        </TouchableOpacity>
       </View>
     </View>
   );
 
   return (
     <View style={styles.container}>
-      {/* 🔹 Título limpio debajo del header */}
       <Text style={styles.screenTitle}>
         Ejercicios de {translatedPart?.toUpperCase()}
       </Text>
@@ -113,7 +155,7 @@ const styles = StyleSheet.create({
     textTransform: "uppercase",
   },
   list: {
-    paddingBottom: 100,
+    paddingBottom: 40,
   },
   card: {
     backgroundColor: "#14212E",
@@ -152,11 +194,24 @@ const styles = StyleSheet.create({
   },
   instructionsContainer: {
     marginTop: 10,
+    marginBottom: 10,
   },
   instructionStep: {
     color: "#d1d5db",
     fontSize: 13,
     marginLeft: 10,
     marginTop: 2,
+  },
+  startButton: {
+    backgroundColor: "#f97316",
+    paddingVertical: 12,
+    borderRadius: 10,
+    alignItems: "center",
+    marginTop: 10,
+  },
+  startButtonText: {
+    color: "#fff",
+    fontSize: 16,
+    fontWeight: "bold",
   },
 });

@@ -2,10 +2,11 @@ import React, { useEffect, useState } from "react";
 import {
   View,
   Text,
-  StyleSheet,
   FlatList,
+  StyleSheet,
   TouchableOpacity,
   Modal,
+  ActivityIndicator,
 } from "react-native";
 import { db, auth } from "../firebaseConfig";
 import {
@@ -19,7 +20,9 @@ import {
 } from "firebase/firestore";
 
 export default function HistorialScreen() {
+  const [rutinas, setRutinas] = useState([]);
   const [entrenamientos, setEntrenamientos] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [modalVisible, setModalVisible] = useState(false);
   const [registroSeleccionado, setRegistroSeleccionado] = useState(null);
 
@@ -30,43 +33,52 @@ export default function HistorialScreen() {
     const q = query(
       collection(db, "progresos"),
       where("userId", "==", user.uid),
-      orderBy("fecha", "asc")
+      orderBy("fecha", "desc")
     );
 
     const unsubscribe = onSnapshot(q, (snapshot) => {
-      const data = snapshot.docs.map((doc) => {
-        const d = doc.data();
+      const rutinasData = [];
+      const entrenamientosData = [];
 
-        // ✅ Convertir minutos decimales a minutos + segundos reales
-        const tiempoDecimal = d.tiempo || 0;
-        const minutosEnteros = Math.floor(tiempoDecimal);
-        const segundos = Math.round((tiempoDecimal - minutosEnteros) * 60);
+      snapshot.docs.forEach((docSnap) => {
+        const d = docSnap.data();
+        const fechaStr =
+          d.fecha?.toDate().toLocaleString("es-SV", { hour12: true }) ||
+          "Sin fecha";
 
-        // ✅ Formatear duración en texto
-        let duracion = "";
-        if (minutosEnteros > 0 && segundos > 0)
-          duracion = `${minutosEnteros} min ${segundos} s`;
-        else if (minutosEnteros > 0)
-          duracion = `${minutosEnteros} min`;
-        else
-          duracion = `${segundos} s`;
-
-        return {
-          id: doc.id,
-          duracion,
-          calorias: d.calorias ? d.calorias.toFixed(1) : "0",
-          fecha: d.fecha?.toDate().toLocaleString("es-SV", {
-            hour12: true,
-          }) || "Sin fecha",
-        };
+        if (d.tiempo && d.calorias) {
+          // ⏱️ Entrenamiento cronometrado
+          const minutos = Math.floor(d.tiempo);
+          const segundos = Math.round((d.tiempo - minutos) * 60);
+          entrenamientosData.push({
+            id: docSnap.id,
+            fecha: fechaStr,
+            duracion:
+              minutos > 0
+                ? `${minutos} min ${segundos} s`
+                : `${segundos} s`,
+            calorias: d.calorias ? d.calorias.toFixed(1) : "0",
+          });
+        } else if (d.nombreRutina) {
+          // 🏋️ Rutina guardada
+          rutinasData.push({
+            id: docSnap.id,
+            nombre: d.nombreRutina,
+            parte: d.parteCuerpo,
+            fecha: fechaStr,
+          });
+        }
       });
-      setEntrenamientos(data);
+
+      setRutinas(rutinasData);
+      setEntrenamientos(entrenamientosData);
+      setLoading(false);
     });
 
     return () => unsubscribe();
   }, []);
 
-  // 🗑️ Eliminar registro de Firestore
+  // 🗑️ Eliminar registro
   const eliminarRegistro = async () => {
     if (!registroSeleccionado) return;
     try {
@@ -74,45 +86,86 @@ export default function HistorialScreen() {
       setModalVisible(false);
       setRegistroSeleccionado(null);
     } catch (error) {
-      console.error("Error al eliminar el registro:", error);
+      console.error("Error al eliminar:", error);
     }
   };
 
+  const renderRutina = ({ item }) => (
+    <View style={[styles.card, { borderLeftColor: "#f97316" }]}>
+      <View style={{ flex: 1 }}>
+        <Text style={styles.title}>🏋️ {item.nombre}</Text>
+        <Text style={styles.text}>💪 Parte: {item.parte}</Text>
+        <Text style={styles.date}>🗓️ {item.fecha}</Text>
+      </View>
+      <TouchableOpacity
+        style={styles.deleteButton}
+        onPress={() => {
+          setRegistroSeleccionado(item);
+          setModalVisible(true);
+        }}
+      >
+        <Text style={styles.deleteIcon}>🗑️</Text>
+      </TouchableOpacity>
+    </View>
+  );
+
+  const renderEntrenamiento = ({ item }) => (
+    <View style={[styles.card, { borderLeftColor: "#22c55e" }]}>
+      <View style={{ flex: 1 }}>
+        <Text style={styles.title}>⏱️ Entrenamiento Cronometrado</Text>
+        <Text style={styles.text}>Duración: {item.duracion}</Text>
+        <Text style={styles.text}>Calorías: {item.calorias} kcal</Text>
+        <Text style={styles.date}>🗓️ {item.fecha}</Text>
+      </View>
+      <TouchableOpacity
+        style={styles.deleteButton}
+        onPress={() => {
+          setRegistroSeleccionado(item);
+          setModalVisible(true);
+        }}
+      >
+        <Text style={styles.deleteIcon}>🗑️</Text>
+      </TouchableOpacity>
+    </View>
+  );
+
+  if (loading) {
+    return (
+      <View style={styles.centered}>
+        <ActivityIndicator size="large" color="#00D0FF" />
+      </View>
+    );
+  }
+
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>🏋️‍♀️ Historial de Entrenamientos</Text>
+      <Text style={styles.header}> Historial de Entrenamientos</Text>
 
+      {/* 🏋️ Sección Rutinas */}
+      <Text style={styles.sectionTitle}>🏋️ Rutinas Guardadas</Text>
+      {rutinas.length === 0 ? (
+        <Text style={styles.empty}>No hay rutinas guardadas.</Text>
+      ) : (
+        <FlatList
+          data={rutinas}
+          keyExtractor={(item) => item.id}
+          renderItem={renderRutina}
+        />
+      )}
+
+      {/* ⏱️ Sección Entrenamientos */}
+      <Text style={styles.sectionTitle}>⏱️ Entrenamientos Cronometrados</Text>
       {entrenamientos.length === 0 ? (
-        <Text style={styles.emptyText}>
-          Aún no tienes entrenamientos guardados.
-        </Text>
+        <Text style={styles.empty}>No hay entrenamientos cronometrados.</Text>
       ) : (
         <FlatList
           data={entrenamientos}
           keyExtractor={(item) => item.id}
-          renderItem={({ item }) => (
-            <View style={styles.card}>
-              <View style={{ flex: 1 }}>
-                <Text style={styles.date}>{item.fecha}</Text>
-                <Text style={styles.text}>Duración: {item.duracion}</Text>
-                <Text style={styles.text}>Calorías: {item.calorias} kcal</Text>
-              </View>
-
-              <TouchableOpacity
-                style={styles.deleteButton}
-                onPress={() => {
-                  setRegistroSeleccionado(item);
-                  setModalVisible(true);
-                }}
-              >
-                <Text style={styles.deleteIcon}>🗑️</Text>
-              </TouchableOpacity>
-            </View>
-          )}
+          renderItem={renderEntrenamiento}
         />
       )}
 
-      {/* Modal de confirmación */}
+      {/* 🧾 Modal de confirmación */}
       <Modal
         visible={modalVisible}
         transparent
@@ -150,38 +203,46 @@ export default function HistorialScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: "#0f172a", padding: 20 },
-  title: {
+  header: {
     color: "#00D0FF",
     fontSize: 24,
     fontWeight: "bold",
     textAlign: "center",
     marginBottom: 20,
   },
-  emptyText: {
-    color: "#9ca3af",
-    textAlign: "center",
-    fontSize: 16,
-    marginTop: 50,
+  sectionTitle: {
+    color: "#00D0FF",
+    fontSize: 18,
+    fontWeight: "bold",
+    marginTop: 15,
+    marginBottom: 8,
   },
   card: {
-    flexDirection: "row",
-    alignItems: "center",
     backgroundColor: "#1e293b",
-    padding: 15,
     borderRadius: 12,
+    padding: 15,
     marginBottom: 12,
     borderLeftWidth: 5,
-    borderLeftColor: "#22c55e",
+    flexDirection: "row",
+    alignItems: "center",
   },
-  date: { color: "#facc15", fontWeight: "bold", marginBottom: 5 },
-  text: { color: "#fff", fontSize: 16 },
+  title: { color: "#fff", fontWeight: "bold", fontSize: 16, marginBottom: 4 },
+  text: { color: "#e5e7eb", fontSize: 14 },
+  date: { color: "#9ca3af", fontSize: 12, marginTop: 4 },
   deleteButton: {
-    marginLeft: 10,
+    backgroundColor: "#334155",
     padding: 8,
     borderRadius: 10,
-    backgroundColor: "#334155",
+    marginLeft: 10,
   },
   deleteIcon: { fontSize: 20, color: "#ef4444" },
+  empty: {
+    color: "#9ca3af",
+    textAlign: "center",
+    fontSize: 14,
+    marginBottom: 10,
+  },
+  centered: { flex: 1, justifyContent: "center", alignItems: "center" },
   modalContainer: {
     flex: 1,
     backgroundColor: "rgba(0,0,0,0.7)",
