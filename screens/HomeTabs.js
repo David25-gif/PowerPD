@@ -2,11 +2,11 @@ import React from "react";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import { Ionicons } from "@expo/vector-icons";
 
-// 🔹 Importa solo las pantallas que tienes
-import RutinasScreen from "../screens/RutinasScreen";
-import HistorialScreen from "../screens/HistorialScreen";
-import PerfilScreen from "../screens/PerfilScreen";
-import ProgresoScreen from "../screens/ProgresoScreen"; // (puede ser tu "inicio" si quieres)
+// Pantallas principales
+import RutinasScreen from "./RutinasScreen";
+import DesafiosScreen from "../screens/DesafiosScreen";
+import PerfilScreen from "./PerfilScreen";
+import ProgresoScreen from "./ProgresoScreen";
 
 const Tab = createBottomTabNavigator();
 
@@ -16,27 +16,26 @@ export default function HomeTabs() {
       screenOptions={({ route }) => ({
         headerShown: false,
         tabBarStyle: {
-          backgroundColor: "#0A1520",
-          borderTopColor: "#14212E",
+          backgroundColor: "#111827",
+          borderTopWidth: 0,
           paddingBottom: 5,
           height: 60,
         },
-        tabBarActiveTintColor: "#f97316",
+        tabBarActiveTintColor: "#16a34a",
         tabBarInactiveTintColor: "#9ca3af",
         tabBarIcon: ({ color, size }) => {
           let iconName;
-          if (route.name === "Progreso") iconName = "home";
-          else if (route.name === "Rutinas") iconName = "barbell";
-          else if (route.name === "Historial") iconName = "time";
-          else if (route.name === "Perfil") iconName = "person";
+          if (route.name === "Rutinas") iconName = "barbell";
+          else if (route.name === "Desafios") iconName = "trophy";
+          else if (route.name === "Progreso") iconName = "stats-chart";
+          else if (route.name === "Perfil") iconName = "person-circle";
           return <Ionicons name={iconName} size={size} color={color} />;
         },
       })}
     >
-      {/* Puedes cambiar “Progreso” por otra pantalla si quieres que sea la principal */}
-      <Tab.Screen name="Progreso" component={ProgresoScreen} />
       <Tab.Screen name="Rutinas" component={RutinasScreen} />
-      <Tab.Screen name="Historial" component={HistorialScreen} />
+      <Tab.Screen name="Desafios" component={DesafiosScreen} />
+      <Tab.Screen name="Progreso" component={ProgresoScreen} />
       <Tab.Screen name="Perfil" component={PerfilScreen} />
     </Tab.Navigator>
   );

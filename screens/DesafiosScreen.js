@@ -21,23 +21,26 @@ const DesafiosScreen = () => {
   const [selectedDesafio, setSelectedDesafio] = useState(null);
   const [nuevoTitulo, setNuevoTitulo] = useState("");
   const [nuevaDescripcion, setNuevaDescripcion] = useState("");
+  const [iniciado, setIniciado] = useState(false);
 
+  // animaciones separadas por modal
   const fadeAnim1 = useState(new Animated.Value(0))[0];
   const scaleAnim1 = useState(new Animated.Value(0.9))[0];
   const fadeAnim2 = useState(new Animated.Value(0))[0];
   const scaleAnim2 = useState(new Animated.Value(0.9))[0];
 
   const DESAFIOS_KEY = "@desafios_guardados";
+  const HISTORIAL_KEY = "@historial_desafios";
 
   const desafiosBase = [
-    { id: "1", titulo: "Reto de resistencia", descripcion: "Corre 10 km en una semana.", completado: false },
-    { id: "2", titulo: "Cardio extremo", descripcion: "Haz 20 minutos de HIIT 3 veces por semana.", completado: false },
-    { id: "3", titulo: "Piernas fuertes", descripcion: "Realiza 100 sentadillas al día durante 5 días.", completado: false },
-    { id: "4", titulo: "Brazos de acero", descripcion: "Completa 50 flexiones diarias durante 7 días.", completado: false },
-    { id: "5", titulo: "Día de abdominales", descripcion: "Haz 200 abdominales en total durante la semana.", completado: false },
-    { id: "6", titulo: "Cuerpo completo", descripcion: "Entrena todos los grupos musculares 4 veces esta semana.", completado: false },
-    { id: "7", titulo: "Reto de flexibilidad", descripcion: "Practica estiramientos 15 min diarios por 5 días.", completado: false },
-    { id: "8", titulo: "Entrenamiento rápido", descripcion: "Realiza una rutina de 15 minutos cada día durante 7 días.", completado: false },
+    { id: "1", titulo: "Reto de resistencia", descripcion: "Corre 10 km en una semana." },
+    { id: "2", titulo: "Cardio extremo", descripcion: "Haz 20 minutos de HIIT 3 veces por semana." },
+    { id: "3", titulo: "Piernas fuertes", descripcion: "Realiza 100 sentadillas al día durante 5 días." },
+    { id: "4", titulo: "Brazos de acero", descripcion: "Completa 50 flexiones diarias durante 7 días." },
+    { id: "5", titulo: "Día de abdominales", descripcion: "Haz 200 abdominales en total durante la semana." },
+    { id: "6", titulo: "Cuerpo completo", descripcion: "Entrena todos los grupos musculares 4 veces esta semana." },
+    { id: "7", titulo: "Reto de flexibilidad", descripcion: "Practica estiramientos 15 min diarios por 5 días." },
+    { id: "8", titulo: "Entrenamiento rápido", descripcion: "Realiza una rutina de 15 minutos cada día durante 7 días." },
   ];
 
   useEffect(() => {
@@ -64,27 +67,28 @@ const DesafiosScreen = () => {
 
   const abrirDesafio = (item) => {
     setSelectedDesafio(item);
+    setIniciado(false);
     setModalVisible(true);
     animarModal(fadeAnim1, scaleAnim1);
   };
 
-  const iniciarDesafio = async () => {
-    const actualizados = desafios.map((d) =>
-      d.id === selectedDesafio.id ? { ...d, iniciado: true } : d
-    );
-    setDesafios(actualizados);
-    await guardarDesafios(actualizados);
-    setSelectedDesafio({ ...selectedDesafio, iniciado: true });
-  };
+  const iniciarDesafio = () => setIniciado(true);
 
   const completarDesafio = async () => {
-    const actualizados = desafios.map((d) =>
-      d.id === selectedDesafio.id ? { ...d, completado: true, iniciado: false } : d
-    );
-    setDesafios(actualizados);
-    await guardarDesafios(actualizados);
-    Alert.alert("¡Desafío completado!", "Este desafío ya no podrá iniciarse nuevamente.");
-    setModalVisible(false);
+    if (!iniciado) return;
+    try {
+      const completados = (await AsyncStorage.getItem(HISTORIAL_KEY)) || "[]";
+      const listaCompletados = JSON.parse(completados);
+      listaCompletados.push({
+        ...selectedDesafio,
+        completadoEn: new Date().toISOString(),
+      });
+      await AsyncStorage.setItem(HISTORIAL_KEY, JSON.stringify(listaCompletados));
+      Alert.alert("¡Desafío completado!", "Se ha agregado al historial.");
+      setModalVisible(false);
+    } catch (error) {
+      console.log("Error al guardar en historial:", error);
+    }
   };
 
   const crearDesafio = async () => {
@@ -92,12 +96,7 @@ const DesafiosScreen = () => {
       Alert.alert("Campos incompletos", "Por favor completa todos los campos.");
       return;
     }
-    const nuevo = {
-      id: Date.now().toString(),
-      titulo: nuevoTitulo,
-      descripcion: nuevaDescripcion,
-      completado: false,
-    };
+    const nuevo = { id: Date.now().toString(), titulo: nuevoTitulo, descripcion: nuevaDescripcion };
     const nuevos = [...desafios, nuevo];
     setDesafios(nuevos);
     await guardarDesafios(nuevos);
@@ -109,7 +108,7 @@ const DesafiosScreen = () => {
   const eliminarCompletados = async () => {
     Alert.alert(
       "Eliminar desafíos completados",
-      "¿Deseas borrar todos los desafíos completados?",
+      "¿Deseas borrar todos los desafíos completados del historial?",
       [
         { text: "Cancelar", style: "cancel" },
         {
@@ -117,12 +116,10 @@ const DesafiosScreen = () => {
           style: "destructive",
           onPress: async () => {
             try {
-              const restantes = desafios.filter((d) => !d.completado);
-              setDesafios(restantes);
-              await guardarDesafios(restantes);
-              Alert.alert("Listo", "Se eliminaron los desafíos completados.");
+              await AsyncStorage.removeItem(HISTORIAL_KEY);
+              Alert.alert("Historial limpiado", "Se eliminaron los desafíos completados.");
             } catch (error) {
-              console.log("Error eliminando desafíos:", error);
+              console.log("Error eliminando historial:", error);
             }
           },
         },
@@ -140,13 +137,8 @@ const DesafiosScreen = () => {
   };
 
   const renderItem = ({ item }) => (
-    <TouchableOpacity
-      style={[styles.card, item.completado && { opacity: 0.5, borderLeftColor: "#ef4444" }]}
-      onPress={() => abrirDesafio(item)}
-      disabled={item.completado}
-    >
+    <TouchableOpacity style={styles.card} onPress={() => abrirDesafio(item)}>
       <Text style={styles.cardTitle}>{item.titulo}</Text>
-      {item.completado && <Text style={styles.completadoText}>Completado</Text>}
     </TouchableOpacity>
   );
 
@@ -176,31 +168,23 @@ const DesafiosScreen = () => {
       {/* Modal Detalle */}
       <Modal visible={modalVisible} animationType="fade" transparent>
         <View style={styles.modalOverlay}>
-          <Animated.View
-            style={[styles.modalContent, { opacity: fadeAnim1, transform: [{ scale: scaleAnim1 }] }]}
-          >
+          <Animated.View style={[styles.modalContent, { opacity: fadeAnim1, transform: [{ scale: scaleAnim1 }] }]}>
             <Text style={styles.modalTitle}>{selectedDesafio?.titulo}</Text>
             <Text style={styles.modalDesc}>{selectedDesafio?.descripcion}</Text>
 
             <View style={styles.btnContainer}>
               <TouchableOpacity
-                style={[
-                  styles.btnAccion,
-                  (selectedDesafio?.iniciado || selectedDesafio?.completado) && styles.btnDeshabilitado,
-                ]}
+                style={[styles.btnAccion, iniciado && styles.btnDeshabilitado]}
                 onPress={iniciarDesafio}
-                disabled={selectedDesafio?.iniciado || selectedDesafio?.completado}
+                disabled={iniciado}
               >
                 <Text style={styles.btnText}>Iniciar</Text>
               </TouchableOpacity>
 
               <TouchableOpacity
-                style={[
-                  styles.btnAccion,
-                  (!selectedDesafio?.iniciado || selectedDesafio?.completado) && styles.btnDeshabilitado,
-                ]}
+                style={[styles.btnAccion, !iniciado && styles.btnDeshabilitado]}
                 onPress={completarDesafio}
-                disabled={!selectedDesafio?.iniciado || selectedDesafio?.completado}
+                disabled={!iniciado}
               >
                 <Text style={styles.btnText}>Completado</Text>
               </TouchableOpacity>
@@ -216,9 +200,7 @@ const DesafiosScreen = () => {
       {/* Modal Crear */}
       <Modal visible={modalCrearVisible} animationType="fade" transparent>
         <View style={styles.modalOverlay}>
-          <Animated.View
-            style={[styles.modalContent, { opacity: fadeAnim2, transform: [{ scale: scaleAnim2 }] }]}
-          >
+          <Animated.View style={[styles.modalContent, { opacity: fadeAnim2, transform: [{ scale: scaleAnim2 }] }]}>
             <Text style={styles.modalTitle}>Nuevo desafío</Text>
             <TextInput
               placeholder="Título del desafío"
@@ -264,7 +246,6 @@ const styles = StyleSheet.create({
     borderLeftColor: "#10b981",
   },
   cardTitle: { color: "#facc15", fontSize: 18, fontWeight: "bold" },
-  completadoText: { color: "#ef4444", marginTop: 5, fontWeight: "bold" },
   btnCrear: {
     backgroundColor: "#10b981",
     padding: 14,
@@ -330,7 +311,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   btnCerrarText: { color: "#fff", fontWeight: "bold" },
-  btnGuardar: {
+   btnGuardar: {
     backgroundColor: "#10b981",
     padding: 14,
     borderRadius: 10,
