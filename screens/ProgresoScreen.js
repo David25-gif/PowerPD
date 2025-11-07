@@ -13,7 +13,7 @@ const Tab = createMaterialTopTabNavigator();
 export default function ProgresoScreen() {
   return (
     <View style={styles.container}>
-      {/* 1. Título superior: Color VERDE */}
+      {/* Título superior */}
       <Text style={styles.title}>
         Tu Progreso <Text style={styles.icon}>💪</Text>
       </Text>
@@ -22,24 +22,15 @@ export default function ProgresoScreen() {
       <View style={{ flex: 1 }}>
         <Tab.Navigator
           screenOptions={{
-            tabBarScrollEnabled: true, 
-            
-            // 2. INDICADOR ACTIVO: CAMBIO A CELESTE/AZUL
-            tabBarIndicatorStyle: { 
-                backgroundColor: "#00D0FF", // 🔵 CELESTE
-                height: 3 
-            },
+            tabBarScrollEnabled: true, // ✅ permite desplazamiento horizontal
+            tabBarIndicatorStyle: { backgroundColor: "#16a34a", height: 3 },
             tabBarLabelStyle: {
               fontSize: 14,
               textTransform: "none",
-              // El texto inactivo puede seguir siendo blanco/gris
-              color: "white", 
+              color: "white",
             },
-            
-            // 2. TEXTO DE PESTAÑA ACTIVA: CAMBIO A CELESTE/AZUL
-            tabBarActiveTintColor: "#00D0FF", // 🔵 CELESTE para el texto activo
-            
-            tabBarInactiveTintColor: "#9ca3af", // Texto inactivo gris
+            tabBarActiveTintColor: "#16a34a",
+            tabBarInactiveTintColor: "#9ca3af",
             tabBarStyle: { backgroundColor: "#0f172a" },
           }}
         >
@@ -76,11 +67,10 @@ const styles = StyleSheet.create({
     backgroundColor: "#0f172a", // Fondo oscuro
     paddingTop: 40,
   },
-  // 1. Título superior: CAMBIO A VERDE
   title: {
     fontSize: 22,
     fontWeight: "bold",
-    color: "#22C55E", // 🟢 VERDE
+    color: "#00D0FF",
     textAlign: "center",
     marginBottom: 10,
   },
