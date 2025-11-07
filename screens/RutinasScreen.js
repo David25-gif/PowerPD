@@ -6,6 +6,7 @@ import {
   TouchableOpacity,
   Image,
   StyleSheet,
+  SafeAreaView, 
 } from "react-native";
 import { getBodyParts } from "../services/exerciseApi";
 
@@ -69,7 +70,7 @@ const RutinasScreen = ({ navigation }) => {
   };
 
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={styles.container}> 
       <Text style={styles.title}>RUTINAS</Text>
 
       <FlatList
@@ -90,7 +91,7 @@ const RutinasScreen = ({ navigation }) => {
           </TouchableOpacity>
         )}
       />
-    </View>
+    </SafeAreaView>
   );
 };
 
@@ -104,7 +105,9 @@ const styles = StyleSheet.create({
     color: "#00D0FF",
     fontSize: 28,
     fontWeight: "bold",
-    marginVertical: 20,
+    // ⬇️ MODIFICACIÓN: Agregamos un margen superior para bajar el texto
+    marginTop: 15, 
+    marginBottom: 20, 
   },
   card: {
     backgroundColor: "#14212E",
