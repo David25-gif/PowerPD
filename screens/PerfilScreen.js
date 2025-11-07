@@ -74,7 +74,7 @@ const PerfilScreen = () => {
     }, [])
   );
 
-  // 💾 Guardar cambios
+  // 💾 Guardar cambios en Firestore
   const saveChanges = async () => {
     try {
       const user = auth.currentUser;
@@ -139,6 +139,7 @@ const PerfilScreen = () => {
       return;
     }
 
+    // ✅ Compatible con Expo Go
     const result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ImagePicker.MediaTypeOptions.Images,
       allowsEditing: true,
@@ -152,6 +153,7 @@ const PerfilScreen = () => {
     }
   };
 
+  // ☁️ Subir imagen a Firebase
   const uploadImageToFirebase = async (uri) => {
     try {
       setUploading(true);
@@ -201,18 +203,14 @@ const PerfilScreen = () => {
       >
         <Text style={[styles.header, { color: "#F1F5F9" }]}>Perfil</Text>
 
+        {/* Tarjeta de perfil */}
         <View style={styles.card}>
           <View style={styles.profileHeader}>
             <TouchableOpacity onPress={pickImage}>
               {userData.foto ? (
                 <Image source={{ uri: userData.foto }} style={styles.avatarImage} />
               ) : (
-                <FeatherIcon
-                  name="user"
-                  size={40}
-                  color={GREEN}
-                  style={styles.avatar}
-                />
+                <FeatherIcon name="user" size={40} color={GREEN} style={styles.avatar} />
               )}
             </TouchableOpacity>
             <View>
@@ -232,6 +230,7 @@ const PerfilScreen = () => {
           </TouchableOpacity>
         </View>
 
+        {/* Datos físicos */}
         <View style={styles.card}>
           <Text style={styles.cardHeader}>Datos Físicos y Objetivos</Text>
           <ProfileItem icon="user" label="Género" value={userData.genero} />
@@ -242,6 +241,7 @@ const PerfilScreen = () => {
           <ProfileItem icon="maximize" label="Altura" value={`${userData.altura} cm`} />
         </View>
 
+        {/* Cerrar sesión */}
         <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
           <FeatherIcon name="log-out" size={20} color="#fff" />
           <Text style={styles.logoutText}>Cerrar sesión</Text>
@@ -290,6 +290,20 @@ const PerfilScreen = () => {
               placeholderTextColor="#9ca3af"
               value={formData.objetivo}
               onChangeText={(text) => handleChange("objetivo", text)}
+              style={styles.input}
+            />
+            <TextInput
+              placeholder="Nivel"
+              placeholderTextColor="#9ca3af"
+              value={formData.nivel}
+              onChangeText={(text) => handleChange("nivel", text)}
+              style={styles.input}
+            />
+            <TextInput
+              placeholder="Género"
+              placeholderTextColor="#9ca3af"
+              value={formData.genero}
+              onChangeText={(text) => handleChange("genero", text)}
               style={styles.input}
             />
 
@@ -392,7 +406,6 @@ const styles = StyleSheet.create({
     marginLeft: 10,
     fontSize: 16,
   },
-  // 🔹 Modal
   modalContainer: {
     flex: 1,
     backgroundColor: "rgba(0,0,0,0.6)",

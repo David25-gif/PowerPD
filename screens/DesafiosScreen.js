@@ -23,7 +23,6 @@ const DesafiosScreen = () => {
   const [nuevaDescripcion, setNuevaDescripcion] = useState("");
   const [iniciado, setIniciado] = useState(false);
 
-  // animaciones separadas por modal
   const fadeAnim1 = useState(new Animated.Value(0))[0];
   const scaleAnim1 = useState(new Animated.Value(0.9))[0];
   const fadeAnim2 = useState(new Animated.Value(0))[0];
@@ -50,8 +49,12 @@ const DesafiosScreen = () => {
   const cargarDesafios = async () => {
     try {
       const guardados = await AsyncStorage.getItem(DESAFIOS_KEY);
-      if (guardados) setDesafios(JSON.parse(guardados));
-      else setDesafios(desafiosBase);
+      if (guardados) {
+        setDesafios(JSON.parse(guardados));
+      } else {
+        setDesafios(desafiosBase);
+        await AsyncStorage.setItem(DESAFIOS_KEY, JSON.stringify(desafiosBase));
+      }
     } catch (error) {
       console.log("Error cargando desafíos:", error);
     }
@@ -105,10 +108,11 @@ const DesafiosScreen = () => {
     setModalCrearVisible(false);
   };
 
+  // ✅ Nueva versión: elimina solo los completados
   const eliminarCompletados = async () => {
     Alert.alert(
       "Eliminar desafíos completados",
-      "¿Deseas borrar todos los desafíos completados del historial?",
+      "¿Deseas borrar los desafíos completados de la lista?",
       [
         { text: "Cancelar", style: "cancel" },
         {
@@ -116,10 +120,27 @@ const DesafiosScreen = () => {
           style: "destructive",
           onPress: async () => {
             try {
-              await AsyncStorage.removeItem(HISTORIAL_KEY);
-              Alert.alert("Historial limpiado", "Se eliminaron los desafíos completados.");
+              const completados = await AsyncStorage.getItem(HISTORIAL_KEY);
+              if (completados) {
+                const listaCompletados = JSON.parse(completados);
+                const idsCompletados = listaCompletados.map((d) => d.id);
+
+                const desafiosRestantes = desafios.filter(
+                  (d) => !idsCompletados.includes(d.id)
+                );
+
+                setDesafios(desafiosRestantes);
+                await guardarDesafios(desafiosRestantes);
+
+                Alert.alert(
+                  "Desafíos eliminados",
+                  "Se eliminaron los desafíos completados de la lista."
+                );
+              } else {
+                Alert.alert("Sin completados", "No hay desafíos completados para eliminar.");
+              }
             } catch (error) {
-              console.log("Error eliminando historial:", error);
+              console.log("Error eliminando desafíos completados:", error);
             }
           },
         },
@@ -154,18 +175,24 @@ const DesafiosScreen = () => {
         <Text style={styles.btnText}>Crear desafío</Text>
       </TouchableOpacity>
 
-      <FlatList
-        data={desafios}
-        keyExtractor={(item) => item.id}
-        renderItem={renderItem}
-        contentContainerStyle={{ paddingBottom: 100 }}
-      />
+      {desafios.length === 0 ? (
+        <Text style={{ color: "#aaa", textAlign: "center", marginTop: 20 }}>
+          No hay desafíos disponibles. ¡Crea uno nuevo!
+        </Text>
+      ) : (
+        <FlatList
+          data={desafios}
+          keyExtractor={(item) => item.id}
+          renderItem={renderItem}
+          contentContainerStyle={{ paddingBottom: 100 }}
+        />
+      )}
 
       <TouchableOpacity style={styles.btnEliminar} onPress={eliminarCompletados}>
         <Text style={styles.btnText}>Eliminar desafíos completados</Text>
       </TouchableOpacity>
 
-      {/* Modal Detalle */}
+      {/* Modal detalle */}
       <Modal visible={modalVisible} animationType="fade" transparent>
         <View style={styles.modalOverlay}>
           <Animated.View style={[styles.modalContent, { opacity: fadeAnim1, transform: [{ scale: scaleAnim1 }] }]}>
@@ -197,7 +224,7 @@ const DesafiosScreen = () => {
         </View>
       </Modal>
 
-      {/* Modal Crear */}
+      {/* Modal crear */}
       <Modal visible={modalCrearVisible} animationType="fade" transparent>
         <View style={styles.modalOverlay}>
           <Animated.View style={[styles.modalContent, { opacity: fadeAnim2, transform: [{ scale: scaleAnim2 }] }]}>
@@ -311,7 +338,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   btnCerrarText: { color: "#fff", fontWeight: "bold" },
-   btnGuardar: {
+  btnGuardar: {
     backgroundColor: "#10b981",
     padding: 14,
     borderRadius: 10,
