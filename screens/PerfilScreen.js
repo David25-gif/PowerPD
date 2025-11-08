@@ -12,10 +12,8 @@ import {
     Alert 
 } from "react-native";
 import { useFocusEffect, useNavigation } from "@react-navigation/native";
-// Asegúrate de que esta ruta a tu contexto sea correcta
 import { UserContext } from "../App"; 
 import FeatherIcon from "react-native-vector-icons/Feather";
-// Asegúrate de que estas importaciones de Firebase son correctas
 import { db, auth, storage } from "../firebaseConfig"; 
 import { doc, getDoc, updateDoc } from "firebase/firestore";
 import { signOut } from "firebase/auth";
@@ -23,6 +21,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import * as ImagePicker from "expo-image-picker";
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 
+// Definición de colores
 const BACKGROUND = "#0F172A";
 const TEXT_COLOR = "#E2E8F0";
 const GREEN = "#22C55E";
@@ -71,7 +70,6 @@ const PerfilScreen = () => {
         setRefreshing(false);
     };
 
-    // Refrescar datos cada vez que la pantalla está enfocada
     useFocusEffect(
         useCallback(() => {
             handleRefresh();
@@ -88,7 +86,7 @@ const PerfilScreen = () => {
             }
             const userRef = doc(db, "usuarios", user.uid);
             await updateDoc(userRef, formData);
-            updateUserData(formData); // Actualiza el contexto
+            updateUserData(formData);
             Alert.alert("✅ Éxito", "Perfil actualizado correctamente");
             setIsEditing(false);
         } catch (error) {
@@ -101,13 +99,13 @@ const PerfilScreen = () => {
     const handleLogout = async () => {
         try {
             await signOut(auth);
-            navigation.replace("Login"); // Redirige al Login
+            navigation.replace("Login");
         } catch (error) {
             console.error("Error al cerrar sesión:", error);
         }
     };
 
-    // Menú de selección de imagen (Cámara/Galería)
+    // Menú de selección de imagen
     const pickImage = async () => {
         Alert.alert(
             "Seleccionar imagen",
@@ -162,27 +160,37 @@ const PerfilScreen = () => {
         }
     };
 
-    // ☁️ FUNCIÓN CLAVE: Subir imagen a Firebase Storage (CORREGIDA)
+    // ☁️ FUNCIÓN CLAVE: Subir imagen a Firebase Storage (SOLUCIÓN XHR para evitar el error _location)
     const uploadImageToFirebase = async (uri) => {
-        let unmounted = false;
-        
-        try {
-            setUploading(true);
-            const user = auth.currentUser;
-            
-            if (!user) {
-                throw new Error("Usuario no autenticado para subir la foto.");
-            }
-            
-            // 1. Convertir URI local a Blob (Manejo robusto de errores de fetch/URI)
-            const response = await fetch(uri);
-            
-            if (!response.ok) {
-                // Captura errores como URI inválida o fallo de permisos de lectura
-                throw new Error(`Error al leer el archivo local: ${response.status} ${response.statusText}`);
-            }
+        setUploading(true);
+        const user = auth.currentUser;
 
-            const blob = await response.blob();
+        if (!user) {
+            Alert.alert("❌ Error", "Usuario no autenticado para subir la foto.");
+            setUploading(false);
+            return;
+        }
+
+        try {
+            // --- 🔑 CLAVE: Usar XMLHttpRequest para crear el Blob de manera compatible ---
+            const blob = await new Promise((resolve, reject) => {
+                const xhr = new XMLHttpRequest();
+                xhr.onload = function () {
+                    // La respuesta es un Blob
+                    resolve(xhr.response);
+                };
+                xhr.onerror = function (e) {
+                    console.error("XHR Error:", e);
+                    reject(new TypeError("Fallo al crear el Blob desde la URI local."));
+                };
+                xhr.responseType = "blob";
+                xhr.open("GET", uri, true);
+                xhr.send(null);
+            });
+
+            if (!blob) {
+                 throw new Error("No se pudo obtener el Blob de la imagen.");
+            }
             
             // 2. Subir a Firebase Storage
             const storageRef = ref(storage, `perfil/${user.uid}.jpg`);
@@ -193,30 +201,20 @@ const PerfilScreen = () => {
 
             const userRef = doc(db, "usuarios", user.uid);
             await updateDoc(userRef, { foto: downloadURL });
-            
-            // 4. Actualizar el contexto y dar feedback
-            if (!unmounted) {
-                updateUserData({ ...userData, foto: downloadURL });
-                Alert.alert("✅ Éxito", "Foto de perfil actualizada correctamente");
-            }
+            updateUserData({ ...userData, foto: downloadURL });
+
+            Alert.alert("✅ Éxito", "Foto de perfil actualizada correctamente");
 
         } catch (error) {
-            console.error("Error al subir imagen:", error.message || error);
+            // Este console.error mostrará el detalle técnico del error
+            console.error("Error al subir imagen (XHR):", error);
             
-            if (!unmounted) {
-                 // Este mensaje es el que se muestra al usuario, similar a tu captura
-                 Alert.alert("❌ Error", "Hubo un problema al subir la foto. Inténtalo de nuevo.");
-            }
-           
+            // Este Alert es el feedback que ve el usuario
+            Alert.alert("❌ Error", "Hubo un problema al subir la foto. Inténtalo de nuevo.");
+
         } finally {
-            if (!unmounted) {
-                setUploading(false);
-            }
+            setUploading(false);
         }
-        
-        return () => {
-            unmounted = true;
-        };
     };
 
     if (!userData) {
@@ -246,6 +244,7 @@ const PerfilScreen = () => {
                 {/* Tarjeta de perfil */}
                 <View style={styles.card}>
                     <View style={styles.profileHeader}>
+                        {/* BOTÓN PARA SUBIR/CAMBIAR FOTO */}
                         <TouchableOpacity onPress={pickImage} disabled={uploading}>
                             {userData.foto ? (
                                 <Image source={{ uri: userData.foto }} style={styles.avatarImage} />
@@ -369,6 +368,7 @@ const PerfilScreen = () => {
     );
 };
 
+// Estilos
 const styles = StyleSheet.create({
     safeArea: { flex: 1, backgroundColor: BACKGROUND },
     container: { flexGrow: 1, 
