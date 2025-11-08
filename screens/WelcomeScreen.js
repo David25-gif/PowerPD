@@ -12,7 +12,7 @@ const SUBTEXT = '#94A3B8';    // Gris azulado suave
 export default function WelcomeScreen({ navigation }) {
   return (
     <SafeAreaView style={styles.container}>
-      {/* 💪 Logo animado */}
+      {/*  Logo animado */}
       <Animatable.View
         animation="pulse"
         iterationCount="infinite"
@@ -23,7 +23,7 @@ export default function WelcomeScreen({ navigation }) {
         <Text style={styles.logo}>💪</Text>
       </Animatable.View>
 
-      {/* ✨ Título */}
+      {/* Título */}
       <Animatable.Text
         animation="fadeInUp"
         delay={300}
@@ -33,7 +33,7 @@ export default function WelcomeScreen({ navigation }) {
         ¡Bienvenido a Power PD!
       </Animatable.Text>
 
-      {/* 🏋 Subtítulo */}
+      {/*  Subtítulo */}
       <Animatable.Text
         animation="fadeInUp"
         delay={700}
@@ -43,7 +43,7 @@ export default function WelcomeScreen({ navigation }) {
         Tu compañero para entrenar y mantenerte en forma.
       </Animatable.Text>
 
-      {/* 🚀 Botón */}
+      {/*  Botón */}
       <Animatable.View
         animation="fadeInUp"
         delay={1200}

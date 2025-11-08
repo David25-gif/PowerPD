@@ -1,22 +1,7 @@
 import React, { useEffect, useState } from "react";
-import {
-  View,
-  Text,
-  FlatList,
-  StyleSheet,
-  TouchableOpacity,
-  Modal,
-  ActivityIndicator,
-} from "react-native";
+import { View, Text, FlatList, StyleSheet, TouchableOpacity, Modal, ActivityIndicator } from "react-native";
 import { db, auth } from "../firebaseConfig";
-import {
-  collection,
-  query,
-  where,
-  orderBy,
-  onSnapshot,
-  deleteDoc,
-  doc,
+import { collection, query, where, orderBy, onSnapshot, deleteDoc, doc,
 } from "firebase/firestore";
 
 export default function HistorialScreen() {
@@ -47,7 +32,7 @@ export default function HistorialScreen() {
           "Sin fecha";
 
         if (d.tiempo && d.calorias) {
-          // ⏱️ Entrenamiento cronometrado
+          //  Entrenamiento cronometrado
           const minutos = Math.floor(d.tiempo);
           const segundos = Math.round((d.tiempo - minutos) * 60);
           entrenamientosData.push({
@@ -78,7 +63,7 @@ export default function HistorialScreen() {
     return () => unsubscribe();
   }, []);
 
-  // 🗑️ Eliminar registro
+  //  Eliminar registro
   const eliminarRegistro = async () => {
     if (!registroSeleccionado) return;
     try {
@@ -141,7 +126,7 @@ export default function HistorialScreen() {
     <View style={styles.container}>
       <Text style={styles.header}> Historial de Entrenamientos</Text>
 
-      {/* 🏋️ Sección Rutinas */}
+      {/* Sección Rutinas */}
       <Text style={styles.sectionTitle}>🏋️ Rutinas Guardadas</Text>
       {rutinas.length === 0 ? (
         <Text style={styles.empty}>No hay rutinas guardadas.</Text>
@@ -153,7 +138,7 @@ export default function HistorialScreen() {
         />
       )}
 
-      {/* ⏱️ Sección Entrenamientos */}
+      {/*  Sección Entrenamientos */}
       <Text style={styles.sectionTitle}>⏱️ Entrenamientos Cronometrados</Text>
       {entrenamientos.length === 0 ? (
         <Text style={styles.empty}>No hay entrenamientos cronometrados.</Text>
@@ -165,7 +150,7 @@ export default function HistorialScreen() {
         />
       )}
 
-      {/* 🧾 Modal de confirmación */}
+      {/* Modal de confirmación */}
       <Modal
         visible={modalVisible}
         transparent
@@ -226,9 +211,21 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
   },
-  title: { color: "#fff", fontWeight: "bold", fontSize: 16, marginBottom: 4 },
-  text: { color: "#e5e7eb", fontSize: 14 },
-  date: { color: "#9ca3af", fontSize: 12, marginTop: 4 },
+  title: { 
+    color: "#fff", 
+    fontWeight: "bold", 
+    fontSize: 16, 
+    marginBottom: 4 
+  },
+  text: { 
+    color: "#e5e7eb", 
+    fontSize: 14 
+  },
+  date: {
+     color: "#9ca3af", 
+     fontSize: 12, 
+     marginTop: 4 
+    },
   deleteButton: {
     backgroundColor: "#334155",
     padding: 8,
@@ -242,7 +239,11 @@ const styles = StyleSheet.create({
     fontSize: 14,
     marginBottom: 10,
   },
-  centered: { flex: 1, justifyContent: "center", alignItems: "center" },
+  centered: { 
+    flex: 1, 
+    justifyContent: "center", 
+    alignItems: "center"
+   },
   modalContainer: {
     flex: 1,
     backgroundColor: "rgba(0,0,0,0.7)",

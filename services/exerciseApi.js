@@ -1,4 +1,4 @@
-// 🌐 API principal de ejercicios
+//  API principal de ejercicios
 const BASE_URL = "https://exercisedb.p.rapidapi.com";
 const API_KEY = "80f3e86ff2msh76d861fc55ac931p101772jsn2d8f5ef4cc02";
 const API_HOST = "exercisedb.p.rapidapi.com";
@@ -8,15 +8,15 @@ const headers = {
   "X-RapidAPI-Host": API_HOST,
 };
 
-// 🌍 Servidores de LibreTranslate (incluye uno que sí permite móviles)
+//  Servidores de LibreTranslate (incluye uno que sí permite móviles)
 const TRANSLATE_SERVERS = [
-  "https://translate.fedilab.app/translate", // ✅ este funciona mejor en móvil
+  "https://translate.fedilab.app/translate", // este funciona mejor en móvil
   "https://translate.argosopentech.com/translate",
   "https://libretranslate.com/translate",
   "https://lt.vern.cc/translate",
 ];
 
-// 🔠 Función de traducción con respaldo
+//  Función de traducción con respaldo
 const translateText = async (text) => {
   if (!text) return "";
 
@@ -52,7 +52,7 @@ const translateText = async (text) => {
   return text;
 };
 
-// 🏋️ Traducción local de partes del cuerpo
+//  Traducción local de partes del cuerpo
 const translateBodyPart = (part) => {
   const map = {
     back: "Espalda",
@@ -69,7 +69,7 @@ const translateBodyPart = (part) => {
   return map[part?.toLowerCase()] || part;
 };
 
-// 💪 Traducción de músculos
+//  Traducción de músculos
 const translateTarget = (target) => {
   const map = {
     lats: "Dorsales",
@@ -90,7 +90,7 @@ const translateTarget = (target) => {
   return map[target?.toLowerCase()] || target;
 };
 
-// ⚙️ Obtener lista de partes del cuerpo traducidas
+//  Obtener lista de partes del cuerpo traducidas
 export const getBodyParts = async () => {
   try {
     const url = `${BASE_URL}/exercises/bodyPartList`;
@@ -103,12 +103,12 @@ export const getBodyParts = async () => {
       translated: translateBodyPart(p),
     }));
   } catch (error) {
-    console.error("❌ Error en getBodyParts:", error);
+    console.error(" Error en getBodyParts:", error);
     return [];
   }
 };
 
-// 🧠 Obtener ejercicios por parte del cuerpo y traducir sus campos
+//  Obtener ejercicios por parte del cuerpo y traducir sus campos
 export const getExercisesByBodyPart = async (bodyPart) => {
   try {
     const normalized = bodyPart.toLowerCase().trim();
@@ -135,7 +135,7 @@ export const getExercisesByBodyPart = async (bodyPart) => {
 
     return translatedData;
   } catch (error) {
-    console.error("❌ Error en getExercisesByBodyPart:", error);
+    console.error(" Error en getExercisesByBodyPart:", error);
     throw error;
   }
 };

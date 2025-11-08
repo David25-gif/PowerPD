@@ -2,13 +2,7 @@ import React, { useEffect, useState } from "react";
 import { View, Text, Dimensions, ScrollView } from "react-native";
 import { BarChart } from "react-native-chart-kit";
 import { db, auth } from "../firebaseConfig";
-import {
-  collection,
-  query,
-  where,
-  onSnapshot,
-  orderBy,
-} from "firebase/firestore";
+import { collection, query, where, onSnapshot, orderBy } from "firebase/firestore";
 import { onAuthStateChanged } from "firebase/auth";
 
 const screenWidth = Dimensions.get("window").width;
@@ -57,7 +51,7 @@ export default function GraficaScreen() {
           }
         }
 
-        // ✅ `tiempo` ya está en minutos decimales
+        // `tiempo` ya está en minutos decimales
         const minutos = parseFloat(reg.tiempo || 0);
         minutosPorDia[fechaSoloDia] =
           (minutosPorDia[fechaSoloDia] || 0) + minutos;

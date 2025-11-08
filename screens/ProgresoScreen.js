@@ -22,7 +22,7 @@ export default function ProgresoScreen() {
       <View style={{ flex: 1 }}>
         <Tab.Navigator
           screenOptions={{
-            tabBarScrollEnabled: true, // ✅ permite desplazamiento horizontal
+            tabBarScrollEnabled: true, //  permite desplazamiento horizontal
             tabBarIndicatorStyle: { backgroundColor: "#16a34a", height: 3 },
             tabBarLabelStyle: {
               fontSize: 14,
@@ -60,7 +60,7 @@ export default function ProgresoScreen() {
   );
 }
 
-// 💅 Estilos
+// Estilos
 const styles = StyleSheet.create({
   container: {
     flex: 1,

@@ -1,13 +1,5 @@
 import React, { useEffect, useState } from "react";
-import {
-  View,
-  Text,
-  FlatList,
-  TouchableOpacity,
-  Image,
-  StyleSheet,
-  SafeAreaView, 
-} from "react-native";
+import { View, Text, FlatList, TouchableOpacity, Image, StyleSheet, SafeAreaView } from "react-native";
 import { getBodyParts } from "../services/exerciseApi";
 
 const imagesMap = {
@@ -29,7 +21,7 @@ const labelsMap = {
   waist: "Abdominales",
 };
 
-// 🔥 Solo las zonas principales que queremos mostrar
+// Solo las zonas principales que queremos mostrar
 const allowedParts = [
   "back",
   "cardio",
@@ -48,7 +40,7 @@ const RutinasScreen = ({ navigation }) => {
         const parts = await getBodyParts();
         console.log("📦 Partes del cuerpo devueltas por API:", parts);
 
-        // ⚙️ Filtramos solo las partes que queremos (por `original`)
+        //  Filtramos solo las partes que queremos (por `original`)
         const filtered = parts
           .filter((p) => allowedParts.includes(p.original))
           .map((p) => ({
@@ -105,7 +97,7 @@ const styles = StyleSheet.create({
     color: "#00D0FF",
     fontSize: 28,
     fontWeight: "bold",
-    // ⬇️ MODIFICACIÓN: Agregamos un margen superior para bajar el texto
+    //  MODIFICACIÓN: Agregamos un margen superior para bajar el texto
     marginTop: 15, 
     marginBottom: 20, 
   },

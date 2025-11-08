@@ -3,7 +3,7 @@ import { View, Text, TouchableOpacity, StyleSheet } from "react-native";
 import { UserContext } from "../App";
 import Feather from "react-native-vector-icons/Feather";
 
-// 🎨 Paleta azul
+//  Paleta azul
 const BG = "#0F172A";         // Fondo azul oscuro
 const BUTTON = "#1D4ED8";     // Azul brillante (botones)
 const BUTTON_ALT = "#3B82F6"; // Azul claro (acento)

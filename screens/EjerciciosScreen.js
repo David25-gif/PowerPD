@@ -1,14 +1,5 @@
 import React, { useEffect, useState } from "react";
-import {
-  View,
-  Text,
-  FlatList,
-  Image,
-  StyleSheet,
-  ActivityIndicator,
-  TouchableOpacity,
-  Alert,
-} from "react-native";
+import { View, Text, FlatList, Image, StyleSheet, ActivityIndicator, TouchableOpacity, Alert } from "react-native";
 import { getExercisesByBodyPart } from "../services/exerciseApi";
 import { db, auth } from "../firebaseConfig";
 import { addDoc, collection, serverTimestamp } from "firebase/firestore";
@@ -27,7 +18,7 @@ const EjerciciosScreen = ({ route }) => {
   const { bodyPart } = route.params || {};
   const [exercises, setExercises] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [savingId, setSavingId] = useState(null); // 👉 saber cuál rutina se está guardando
+  const [savingId, setSavingId] = useState(null); //  saber cuál rutina se está guardando
 
   const translatedPart = bodyPartNames[bodyPart] || bodyPart;
 

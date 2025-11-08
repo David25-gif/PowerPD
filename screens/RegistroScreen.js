@@ -6,7 +6,7 @@ import { auth, db } from "../firebaseConfig";
 import { doc, setDoc } from 'firebase/firestore';
 import { UserContext } from '../App';
 
-// 🎨 Paleta de colores
+// Paleta de colores
 const BG = '#0F172A';         // Fondo azul oscuro
 const BUTTON = '#1D4ED8';     // Azul brillante
 const BUTTON_ALT = '#3B82F6'; // Azul claro (sombra)
@@ -83,7 +83,7 @@ export default function RegistroScreen({ navigation }) {
 
       updateUserData({ nombre });
 
-      mostrarAlerta('✅ Registro exitoso', 'Tu cuenta ha sido creada con éxito.');
+      mostrarAlerta(' Registro exitoso', 'Tu cuenta ha sido creada con éxito.');
       navigation.replace("Genero");
 
     } catch (error) {
@@ -161,7 +161,7 @@ export default function RegistroScreen({ navigation }) {
   );
 }
 
-// 🎨 Estilos
+// Estilos
 const styles = StyleSheet.create({
   container: {
     flex: 1,

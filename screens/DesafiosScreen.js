@@ -1,17 +1,5 @@
 import React, { useState, useEffect } from "react";
-import {
-  View,
-  Text,
-  TouchableOpacity,
-  StyleSheet,
-  FlatList,
-  Modal,
-  TextInput,
-  Alert,
-  StatusBar,
-  Platform,
-  Animated,
-} from "react-native";
+import { View, Text, TouchableOpacity, StyleSheet, FlatList, Modal, TextInput, Alert, StatusBar, Platform, Animated } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
 const DesafiosScreen = () => {
@@ -108,7 +96,7 @@ const DesafiosScreen = () => {
     setModalCrearVisible(false);
   };
 
-  // ✅ Nueva versión: elimina solo los completados
+  // Nueva versión: elimina solo los completados
   const eliminarCompletados = async () => {
     Alert.alert(
       "Eliminar desafíos completados",

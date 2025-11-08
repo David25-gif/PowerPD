@@ -1,16 +1,5 @@
 import React, { useContext, useState, useCallback } from "react";
-import {
-  View,
-  Text,
-  StyleSheet,
-  TouchableOpacity,
-  Modal,
-  TextInput,
-  ScrollView,
-  RefreshControl,
-  Image,
-  Alert,
-} from "react-native";
+import { View, Text, StyleSheet, TouchableOpacity, Modal, TextInput, ScrollView, RefreshControl, Image, Alert } from "react-native";
 import { useFocusEffect, useNavigation } from "@react-navigation/native";
 import { UserContext } from "../App";
 import FeatherIcon from "react-native-vector-icons/Feather";
@@ -50,7 +39,7 @@ const PerfilScreen = () => {
     setFormData((prev) => ({ ...prev, [field]: value }));
   };
 
-  // 🔄 Refrescar datos desde Firestore
+  //  Refrescar datos desde Firestore
   const handleRefresh = async () => {
     setRefreshing(true);
     try {
@@ -74,7 +63,7 @@ const PerfilScreen = () => {
     }, [])
   );
 
-  // 💾 Guardar cambios en Firestore
+  // Guardar cambios en Firestore
   const saveChanges = async () => {
     try {
       const user = auth.currentUser;
@@ -89,7 +78,7 @@ const PerfilScreen = () => {
     }
   };
 
-  // 🚪 Cerrar sesión
+  // Cerrar sesión
   const handleLogout = async () => {
     try {
       await signOut(auth);
@@ -99,7 +88,7 @@ const PerfilScreen = () => {
     }
   };
 
-  // 📸 Elegir imagen
+  // Elegir imagen
   const pickImage = async () => {
     Alert.alert(
       "Seleccionar imagen",
@@ -139,7 +128,7 @@ const PerfilScreen = () => {
       return;
     }
 
-    // ✅ Compatible con Expo Go
+    // Compatible con Expo Go
     const result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ImagePicker.MediaTypeOptions.Images,
       allowsEditing: true,
@@ -248,7 +237,7 @@ const PerfilScreen = () => {
         </TouchableOpacity>
       </ScrollView>
 
-      {/* ✏️ MODAL DE EDICIÓN */}
+      {/* MODAL DE EDICIÓN */}
       <Modal visible={isEditing} animationType="slide" transparent>
         <View style={styles.modalContainer}>
           <View style={styles.modalContent}>
@@ -330,8 +319,12 @@ const PerfilScreen = () => {
 };
 
 const styles = StyleSheet.create({
-  safeArea: { flex: 1, backgroundColor: BACKGROUND },
-  container: { flexGrow: 1, padding: 20, backgroundColor: BACKGROUND },
+  safeArea: { flex: 1, backgroundColor: BACKGROUND 
+
+  },
+  container: { flexGrow: 1, 
+    padding: 20, 
+    backgroundColor: BACKGROUND },
   header: {
     fontSize: 24,
     fontWeight: "bold",
@@ -344,7 +337,9 @@ const styles = StyleSheet.create({
     padding: 15,
     marginBottom: 20,
   },
-  profileHeader: { flexDirection: "row", alignItems: "center", marginBottom: 10 },
+  profileHeader: { flexDirection: "row", 
+    alignItems: "center", 
+    marginBottom: 10 },
   avatar: {
     marginRight: 15,
     borderWidth: 2,
@@ -361,7 +356,9 @@ const styles = StyleSheet.create({
     marginRight: 15,
   },
   name: { fontSize: 20, fontWeight: "bold" },
-  level: { fontSize: 14, color: SUBTEXT },
+  level: { fontSize: 14, 
+    color: SUBTEXT },
+
   editButton: {
     backgroundColor: BLUE,
     padding: 10,
@@ -387,10 +384,16 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: "#334155",
   },
-  itemContent: { flexDirection: "row", alignItems: "center" },
+  itemContent: { 
+    flexDirection: "row", 
+    alignItems: "center" 
+  },
   itemIcon: { marginRight: 10 },
   itemLabel: { fontSize: 16 },
-  itemValue: { fontSize: 16, fontWeight: "500", color: SUBTEXT },
+
+  itemValue: { fontSize: 16, 
+    fontWeight: "500", color: SUBTEXT 
+  },
   logoutButton: {
     flexDirection: "row",
     alignItems: "center",
@@ -432,7 +435,11 @@ const styles = StyleSheet.create({
     color: TEXT_COLOR,
     marginBottom: 10,
   },
-  modalButtons: { flexDirection: "row", justifyContent: "space-between", marginTop: 10 },
+  modalButtons: {
+    flexDirection: "row", 
+    justifyContent: "space-between", 
+    marginTop: 10 
+  },
   modalButton: {
     flex: 1,
     marginHorizontal: 5,
@@ -440,7 +447,10 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     alignItems: "center",
   },
-  modalButtonText: { color: "#fff", fontWeight: "bold" },
+  modalButtonText: { 
+    color: "#fff", 
+    fontWeight: "bold" 
+  },
 });
 
 export default PerfilScreen;

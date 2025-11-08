@@ -2,16 +2,7 @@ import React, { useEffect, useState } from "react";
 import { View, Text, Modal, TextInput, TouchableOpacity, StyleSheet } from "react-native";
 import { Calendar } from "react-native-calendars";
 import { db, auth } from "../firebaseConfig";
-import {
-  collection,
-  addDoc,
-  query,
-  where,
-  onSnapshot,
-  deleteDoc,
-  updateDoc,
-  doc,
-} from "firebase/firestore";
+import { collection, addDoc, query, where, onSnapshot, deleteDoc, updateDoc, doc } from "firebase/firestore";
 
 export default function CalendarioScreen() {
   const [selectedDate, setSelectedDate] = useState("");
@@ -22,7 +13,7 @@ export default function CalendarioScreen() {
   const [rutinas, setRutinas] = useState({});
   const user = auth.currentUser;
 
-  // 📅 Escucha en tiempo real las rutinas del usuario
+  // Escucha en tiempo real las rutinas del usuario
   useEffect(() => {
     if (!user) return;
     const q = query(collection(db, "rutinas"), where("userId", "==", user.uid));
@@ -59,14 +50,14 @@ export default function CalendarioScreen() {
     const existente = rutinas[selectedDate];
     try {
       if (existente) {
-        // 🔄 Actualizar rutina existente
+        // Actualizar rutina existente
         await updateDoc(doc(db, "rutinas", existente.id), {
           titulo,
           nota,
           hora,
         });
       } else {
-        // 🆕 Crear nueva rutina
+        // Crear nueva rutina
         await addDoc(collection(db, "rutinas"), {
           userId: user.uid,
           fecha: selectedDate,
@@ -92,7 +83,7 @@ export default function CalendarioScreen() {
     }
   };
 
-  // 🎯 Marcar fechas con rutinas
+  //  Marcar fechas con rutinas
   const markedDates = Object.keys(rutinas).reduce((acc, fecha) => {
     acc[fecha] = {
       marked: true,
@@ -184,7 +175,7 @@ export default function CalendarioScreen() {
   );
 }
 
-// 🎨 Estilos
+// Estilos
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: "#0f172a", padding: 10 },
   title: {
@@ -235,7 +226,18 @@ const styles = StyleSheet.create({
     flex: 1,
     marginLeft: 5,
   },
-  buttonText: { color: "#fff", textAlign: "center", fontWeight: "bold" },
-  cancelButton: { marginTop: 10, alignItems: "center" },
-  cancelText: { color: "#94a3b8", fontSize: 16 },
+  buttonText: { 
+    color: "#fff", 
+    textAlign: "center", 
+    fontWeight: "bold" 
+  },
+  
+  cancelButton: { 
+    marginTop: 10, 
+    alignItems: "center" 
+  },
+  cancelText: { 
+    color: "#94a3b8", 
+    fontSize: 16 
+  },
 });

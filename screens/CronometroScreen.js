@@ -52,7 +52,7 @@ export default function CronometroScreen() {
         return;
       }
 
-      // 🔹 Convertir segundos a minutos (con decimales)
+      // Convertir segundos a minutos (con decimales)
       const minutos = tiempo / 60;
       const calorias = minutos * 8; // 8 kcal/minuto aprox.
 
@@ -60,7 +60,7 @@ export default function CronometroScreen() {
         userId: user.uid,
         tiempo: minutos, // guardamos en minutos para la gráfica
         calorias,
-        fecha: serverTimestamp(), // 🔹 Timestamp oficial de Firebase
+        fecha: serverTimestamp(), // Timestamp oficial de Firebase
       });
 
       manejarReinicio();

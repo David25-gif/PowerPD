@@ -8,9 +8,9 @@ import {
   KeyboardAvoidingView,
   Platform,
 } from "react-native";
-import { UserContext } from "../App"; // 👈 importa el contexto desde App.js
+import { UserContext } from "../App"; // importa el contexto desde App.js
 
-// 🎨 Paleta azul
+// Paleta azul
 const BG = "#0F172A";         // Fondo azul oscuro
 const BUTTON = "#1D4ED8";     // Azul brillante (botones)
 const BUTTON_ALT = "#3B82F6"; // Azul claro (borde/sombra)
