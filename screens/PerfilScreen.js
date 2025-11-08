@@ -12,9 +12,11 @@ import {
     Alert 
 } from "react-native";
 import { useFocusEffect, useNavigation } from "@react-navigation/native";
-import { UserContext } from "../App";
+// Asegúrate de que esta ruta a tu contexto sea correcta
+import { UserContext } from "../App"; 
 import FeatherIcon from "react-native-vector-icons/Feather";
-import { db, auth, storage } from "../firebaseConfig";
+// Asegúrate de que estas importaciones de Firebase son correctas
+import { db, auth, storage } from "../firebaseConfig"; 
 import { doc, getDoc, updateDoc } from "firebase/firestore";
 import { signOut } from "firebase/auth";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -45,10 +47,8 @@ const PerfilScreen = () => {
     const [refreshing, setRefreshing] = useState(false);
     const [uploading, setUploading] = useState(false);
     const navigation = useNavigation();
-    // Inicializar formData con una copia de userData para edición
     const [formData, setFormData] = useState({ ...userData });
 
-    // Manejador genérico para actualizar el estado del formulario
     const handleChange = (field, value) => {
         setFormData((prev) => ({ ...prev, [field]: value }));
     };
@@ -125,7 +125,7 @@ const PerfilScreen = () => {
     const openCamera = async () => {
         const permissionResult = await ImagePicker.requestCameraPermissionsAsync();
         if (!permissionResult.granted) {
-            alert("Se necesita permiso para usar la cámara");
+            Alert.alert("Permiso Requerido", "Se necesita permiso para usar la cámara");
             return;
         }
 
@@ -145,7 +145,7 @@ const PerfilScreen = () => {
     const openGallery = async () => {
         const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
         if (!permissionResult.granted) {
-            alert("Se necesita permiso para acceder a la galería");
+            Alert.alert("Permiso Requerido", "Se necesita permiso para acceder a la galería");
             return;
         }
 
@@ -164,6 +164,8 @@ const PerfilScreen = () => {
 
     // ☁️ FUNCIÓN CLAVE: Subir imagen a Firebase Storage (CORREGIDA)
     const uploadImageToFirebase = async (uri) => {
+        let unmounted = false;
+        
         try {
             setUploading(true);
             const user = auth.currentUser;
@@ -172,38 +174,51 @@ const PerfilScreen = () => {
                 throw new Error("Usuario no autenticado para subir la foto.");
             }
             
-            // 🔑 CORRECCIÓN: Usa fetch para obtener la URI local como Blob
+            // 1. Convertir URI local a Blob (Manejo robusto de errores de fetch/URI)
             const response = await fetch(uri);
             
             if (!response.ok) {
-                // Manejo de error si fetch falla (ej. URI no válida)
-                throw new Error(`Error de red o URI inválida: ${response.status}`);
+                // Captura errores como URI inválida o fallo de permisos de lectura
+                throw new Error(`Error al leer el archivo local: ${response.status} ${response.statusText}`);
             }
 
             const blob = await response.blob();
             
-            // Referencia de almacenamiento
+            // 2. Subir a Firebase Storage
             const storageRef = ref(storage, `perfil/${user.uid}.jpg`);
             await uploadBytes(storageRef, blob);
 
-            // Obtener URL pública y actualizar Firestore
+            // 3. Obtener URL y actualizar Firestore
             const downloadURL = await getDownloadURL(storageRef);
 
             const userRef = doc(db, "usuarios", user.uid);
             await updateDoc(userRef, { foto: downloadURL });
-            updateUserData({ ...userData, foto: downloadURL });
+            
+            // 4. Actualizar el contexto y dar feedback
+            if (!unmounted) {
+                updateUserData({ ...userData, foto: downloadURL });
+                Alert.alert("✅ Éxito", "Foto de perfil actualizada correctamente");
+            }
 
-            Alert.alert("✅ Éxito", "Foto de perfil actualizada correctamente");
         } catch (error) {
-            console.error("Error al subir imagen:", error.message);
-            // El mensaje del alert es el que ve el usuario en la captura
-            Alert.alert("❌ Error", "Hubo un problema al subir la foto.");
+            console.error("Error al subir imagen:", error.message || error);
+            
+            if (!unmounted) {
+                 // Este mensaje es el que se muestra al usuario, similar a tu captura
+                 Alert.alert("❌ Error", "Hubo un problema al subir la foto. Inténtalo de nuevo.");
+            }
+           
         } finally {
-            setUploading(false);
+            if (!unmounted) {
+                setUploading(false);
+            }
         }
+        
+        return () => {
+            unmounted = true;
+        };
     };
 
-    // Renderizado condicional si no hay datos
     if (!userData) {
         return (
             <SafeAreaView style={styles.safeArea}>
@@ -247,7 +262,7 @@ const PerfilScreen = () => {
                     <TouchableOpacity
                         style={styles.editButton}
                         onPress={() => {
-                            setFormData({ ...userData }); // Carga los datos actuales al modal
+                            setFormData({ ...userData });
                             setIsEditing(true);
                         }}
                     >
@@ -279,7 +294,6 @@ const PerfilScreen = () => {
                     <View style={styles.modalContent}>
                         <Text style={styles.modalTitle}>Editar Perfil</Text>
 
-                        {/* Campos de edición */}
                         <TextInput
                             placeholder="Nombre"
                             placeholderTextColor="#9ca3af"
@@ -333,7 +347,6 @@ const PerfilScreen = () => {
                             style={styles.input}
                         />
 
-                        {/* Botones del modal */}
                         <View style={styles.modalButtons}>
                             <TouchableOpacity
                                 style={[styles.modalButton, { backgroundColor: GREEN }]}
