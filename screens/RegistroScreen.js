@@ -78,6 +78,7 @@ export default function RegistroScreen({ navigation }) {
         genero: "",
         edad: "",
         peso: "",
+        foto: "",
         profileComplete: false,
       });
 
