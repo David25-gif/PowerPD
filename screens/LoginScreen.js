@@ -29,7 +29,7 @@ export default function LoginScreen({ navigation }) {
 
     try {
       const userCredential = await signInWithEmailAndPassword(auth, email, password);
-   git   const user = userCredential.user;
+     const user = userCredential.user;
 
       mostrarAlerta('Inicio de sesión exitoso', `¡Bienvenido, ${user.displayName || user.email}!`);
 
@@ -176,7 +176,7 @@ const styles = StyleSheet.create({
   },
   button: {
     width: '90%',
-    backgroundColor: '#FF4500', // naranja fuego
+    backgroundColor: '#FF4500', 
     paddingVertical: 12,
     borderRadius: 20,
     alignItems: 'center',

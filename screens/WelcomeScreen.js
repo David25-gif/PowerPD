@@ -17,15 +17,15 @@ export default function WelcomeScreen({ navigation }) {
       
       <SafeAreaView style={styles.container}>
         
-        {/* Título animado con efecto de zoom */}
+      
         <Animatable.Text
-          animation="pulse" // 🔹 efecto de zoom
+          animation="pulse" 
           iterationCount="infinite"
           easing="ease-in-out"
           duration={1500}
           style={styles.title}
         >
-          ¡Bienvenido a Power PD!
+          ¡Bienvenido a Breaking Gym!
         </Animatable.Text>
 
         {/* Subtítulo animado */}
@@ -62,7 +62,7 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     alignItems: 'center',
-    justifyContent: 'flex-end', // todo más abajo
+    justifyContent: 'flex-end',
     paddingHorizontal: 30,
     paddingBottom: 80,
   },
@@ -74,7 +74,7 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 36,
     fontWeight: 'bold',
-    color: FIRE, // 🔥 Color fuego
+    color: FIRE,
     textAlign: 'center',
     marginBottom: 10,
     textShadowColor: 'rgba(0,0,0,0.7)',
@@ -83,7 +83,7 @@ const styles = StyleSheet.create({
   },
   subtitle: {
     fontSize: 20,
-    color: FIRE_LIGHT, // 🔥 Subtítulo fuego
+    color: FIRE_LIGHT, 
     textAlign: 'center',
     marginBottom: 40,
     textShadowColor: 'rgba(0,0,0,0.5)',
@@ -94,7 +94,7 @@ const styles = StyleSheet.create({
     width: '100%',
   },
   button: {
-    backgroundColor: FIRE, // 🔥 Botón fuego
+    backgroundColor: FIRE,
     paddingVertical: 15,
     borderRadius: 30,
     alignItems: 'center',

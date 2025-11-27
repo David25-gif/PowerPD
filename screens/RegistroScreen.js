@@ -1,5 +1,5 @@
 import React, { useState, useContext } from 'react';
-import { View, Text, TextInput, StyleSheet, Alert, TouchableOpacity, Platform } from 'react-native';
+import { View, Text, TextInput, StyleSheet, Alert, TouchableOpacity, Platform, ImageBackground } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { createUserWithEmailAndPassword, updateProfile } from "firebase/auth";
 import { auth, db } from "../firebaseConfig";
@@ -7,11 +7,11 @@ import { doc, setDoc } from 'firebase/firestore';
 import { UserContext } from '../App';
 
 // Paleta de colores
-const BG = '#ff4a02be';         // Fondo azul oscuro
-const BUTTON = '#1D4ED8';     // Azul brillante
-const BUTTON_ALT = '#3B82F6'; // Azul claro (sombra)
-const TEXT = '#FFFFFF';       // Blanco
-const SUBTEXT = '#94A3B8';    // Gris azulado suave
+
+const BUTTON = '#1D4ED8';       // Azul brillante
+const BUTTON_ALT = '#3B82F6';   // Azul claro (sombra)
+const TEXT = '#FFFFFF';          // Blanco
+const SUBTEXT = '#94A3B8';       // Gris azulado suave
 
 export default function RegistroScreen({ navigation }) {
   const { updateUserData } = useContext(UserContext);
@@ -32,6 +32,7 @@ export default function RegistroScreen({ navigation }) {
   };
 
   const validarEmail = (correo) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(correo);
+
   const validarPasswordDetalle = (clave) => ({
     minLength: clave.length >= 8,
     hasLower: /[a-z]/.test(clave),
@@ -84,7 +85,7 @@ export default function RegistroScreen({ navigation }) {
 
       updateUserData({ nombre });
 
-      mostrarAlerta(' Registro exitoso', 'Tu cuenta ha sido creada con éxito.');
+      mostrarAlerta('Registro exitoso', 'Tu cuenta ha sido creada con éxito.');
       navigation.replace("Genero");
 
     } catch (error) {
@@ -100,73 +101,81 @@ export default function RegistroScreen({ navigation }) {
   };
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>Crear cuenta</Text>
+    <ImageBackground
+      source={require('../assets/HombreFitnnes.jpeg')}
+      style={styles.background}
+      resizeMode="cover"
+    >
+      <View style={styles.container}>
+        <Text style={styles.title}>Crear cuenta</Text>
 
-      <TextInput
-        style={styles.input}
-        placeholder="Nombre completo"
-        placeholderTextColor={SUBTEXT}
-        value={nombre}
-        onChangeText={setNombre}
-        autoCapitalize="words"
-      />
-      <TextInput
-        style={styles.input}
-        placeholder="Correo electrónico"
-        placeholderTextColor={SUBTEXT}
-        keyboardType="email-address"
-        value={email}
-        onChangeText={setEmail}
-        autoCapitalize="none"
-      />
-
-      <View style={styles.passwordContainer}>
         <TextInput
-          style={styles.passwordInput}
-          placeholder="Contraseña"
+          style={styles.input}
+          placeholder="Nombre completo"
           placeholderTextColor={SUBTEXT}
-          secureTextEntry={!showPassword}
-          value={password}
-          onChangeText={setPassword}
+          value={nombre}
+          onChangeText={setNombre}
+          autoCapitalize="words"
         />
-        <TouchableOpacity onPress={() => setShowPassword(!showPassword)}>
-          <Ionicons name={showPassword ? 'eye-off' : 'eye'} size={22} color={SUBTEXT} />
+        <TextInput
+          style={styles.input}
+          placeholder="Correo electrónico"
+          placeholderTextColor={SUBTEXT}
+          keyboardType="email-address"
+          value={email}
+          onChangeText={setEmail}
+          autoCapitalize="none"
+        />
+
+        <View style={styles.passwordContainer}>
+          <TextInput
+            style={styles.passwordInput}
+            placeholder="Contraseña"
+            placeholderTextColor={SUBTEXT}
+            secureTextEntry={!showPassword}
+            value={password}
+            onChangeText={setPassword}
+          />
+          <TouchableOpacity onPress={() => setShowPassword(!showPassword)}>
+            <Ionicons name={showPassword ? 'eye-off' : 'eye'} size={22} color={SUBTEXT} />
+          </TouchableOpacity>
+        </View>
+
+        <View style={styles.passwordContainer}>
+          <TextInput
+            style={styles.passwordInput}
+            placeholder="Confirmar contraseña"
+            placeholderTextColor={SUBTEXT}
+            secureTextEntry={!showConfirmPassword}
+            value={confirmPassword}
+            onChangeText={setConfirmPassword}
+          />
+          <TouchableOpacity onPress={() => setShowConfirmPassword(!showConfirmPassword)}>
+            <Ionicons name={showConfirmPassword ? 'eye-off' : 'eye'} size={22} color={SUBTEXT} />
+          </TouchableOpacity>
+        </View>
+
+        <TouchableOpacity style={styles.buttonPrimary} onPress={handleRegistro}>
+          <Text style={styles.buttonText}>Registrarse</Text>
+        </TouchableOpacity>
+
+        <Text style={styles.link}>¿Ya tienes cuenta?</Text>
+
+        <TouchableOpacity style={styles.buttonSecondary} onPress={() => navigation.navigate('Login')}>
+          <Text style={styles.buttonAltText}>Inicia sesión</Text>
         </TouchableOpacity>
       </View>
-
-      <View style={styles.passwordContainer}>
-        <TextInput
-          style={styles.passwordInput}
-          placeholder="Confirmar contraseña"
-          placeholderTextColor={SUBTEXT}
-          secureTextEntry={!showConfirmPassword}
-          value={confirmPassword}
-          onChangeText={setConfirmPassword}
-        />
-        <TouchableOpacity onPress={() => setShowConfirmPassword(!showConfirmPassword)}>
-          <Ionicons name={showConfirmPassword ? 'eye-off' : 'eye'} size={22} color={SUBTEXT} />
-        </TouchableOpacity>
-      </View>
-
-      <TouchableOpacity style={styles.buttonPrimary} onPress={handleRegistro}>
-        <Text style={styles.buttonText}>Registrarse</Text>
-      </TouchableOpacity>
-
-      <Text style={styles.link}>¿Ya tienes cuenta?</Text>
-
-      <TouchableOpacity style={styles.buttonSecondary} onPress={() => navigation.navigate('Login')}>
-        <Text style={styles.buttonAltText}>Inicia sesión</Text>
-      </TouchableOpacity>
-    </View>
+    </ImageBackground>
   );
 }
 
 // Estilos
 const styles = StyleSheet.create({
+  background: {
+    flex: 1,
+  },
   container: {
     flex: 1,
-    backgroundColor: BG,
     justifyContent: 'center',
     alignItems: 'center',
     padding: 20,
@@ -184,7 +193,7 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     padding: 12,
     marginBottom: 15,
-    backgroundColor: '#1E293B',
+    backgroundColor: 'rgba(30, 41, 59, 0.7)', 
     color: TEXT,
     fontSize: 16,
   },
@@ -197,7 +206,7 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     paddingHorizontal: 10,
     marginBottom: 15,
-    backgroundColor: '#1E293B',
+    backgroundColor: 'rgba(30, 41, 59, 0.7)', 
   },
   passwordInput: {
     flex: 1,
