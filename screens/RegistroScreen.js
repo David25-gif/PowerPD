@@ -7,7 +7,7 @@ import { doc, setDoc } from 'firebase/firestore';
 import { UserContext } from '../App';
 
 // Paleta de colores
-const BG = '#0F172A';         // Fondo azul oscuro
+const BG = '#ff4a02be';         // Fondo azul oscuro
 const BUTTON = '#1D4ED8';     // Azul brillante
 const BUTTON_ALT = '#3B82F6'; // Azul claro (sombra)
 const TEXT = '#FFFFFF';       // Blanco

@@ -1,5 +1,8 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert, Platform } from 'react-native';
+import { 
+  View, Text, TextInput, TouchableOpacity, StyleSheet, Alert, 
+  Platform, ImageBackground, ScrollView, KeyboardAvoidingView 
+} from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { signInWithEmailAndPassword } from "firebase/auth";
 import { auth, db } from "../firebaseConfig";
@@ -26,7 +29,7 @@ export default function LoginScreen({ navigation }) {
 
     try {
       const userCredential = await signInWithEmailAndPassword(auth, email, password);
-      const user = userCredential.user;
+   git   const user = userCredential.user;
 
       mostrarAlerta('Inicio de sesión exitoso', `¡Bienvenido, ${user.displayName || user.email}!`);
 
@@ -62,110 +65,133 @@ export default function LoginScreen({ navigation }) {
   };
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>Iniciar Sesión</Text>
-
-      <TextInput
-        style={styles.input}
-        placeholder="Correo electrónico"
-        placeholderTextColor="#aaa"
-        keyboardType="email-address"
-        value={email}
-        onChangeText={setEmail}
-      />
-
-      <View style={styles.passwordContainer}>
-        <TextInput
-          style={styles.passwordInput}
-          placeholder="Contraseña"
-          placeholderTextColor="#aaa"
-          secureTextEntry={!showPassword}
-          value={password}
-          onChangeText={setPassword}
-        />
-        <TouchableOpacity onPress={() => setShowPassword(!showPassword)}>
-          <Ionicons
-            name={showPassword ? 'eye-off' : 'eye'}
-            size={22}
-            color="#ccc"
-          />
-        </TouchableOpacity>
-      </View>
-
-      <TouchableOpacity style={styles.button} onPress={handleLogin}>
-        <Text style={styles.buttonText}>ENTRAR</Text>
-      </TouchableOpacity>
-
-      <Text style={styles.text}>¿No tienes cuenta?</Text>
-
-      <TouchableOpacity
-        style={[styles.button, styles.registerButton]}
-        onPress={() => navigation.navigate('Registro')}
+    <ImageBackground
+      source={require('../assets/ImageMusculo.jpeg')}
+      style={styles.background}
+      resizeMode="cover"
+    >
+      <KeyboardAvoidingView
+        style={{ flex: 1 }}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       >
-        <Text style={styles.buttonText}>REGÍSTRATE</Text>
-      </TouchableOpacity>
-    </View>
+        <ScrollView contentContainerStyle={styles.scrollContainer} keyboardShouldPersistTaps="handled">
+          <View style={styles.container}>
+            <Text style={styles.title}>Iniciar Sesión</Text>
+
+            <TextInput
+              style={styles.input}
+              placeholder="Correo electrónico"
+              placeholderTextColor="#ffffffff"
+              keyboardType="email-address"
+              value={email}
+              onChangeText={setEmail}
+            />
+
+            <View style={styles.passwordContainer}>
+              <TextInput
+                style={styles.passwordInput}
+                placeholder="Contraseña"
+                placeholderTextColor="#ffffffff"
+                secureTextEntry={!showPassword}
+                value={password}
+                onChangeText={setPassword}
+              />
+              <TouchableOpacity onPress={() => setShowPassword(!showPassword)}>
+                <Ionicons
+                  name={showPassword ? 'eye-off' : 'eye'}
+                  size={22}
+                  color="#ffffffff"
+                />
+              </TouchableOpacity>
+            </View>
+
+            <TouchableOpacity style={styles.button} onPress={handleLogin}>
+              <Text style={styles.buttonText}>ENTRAR</Text>
+            </TouchableOpacity>
+
+            <Text style={styles.text}>¿No tienes cuenta?</Text>
+
+            <TouchableOpacity
+              style={[styles.button, styles.registerButton]}
+              onPress={() => navigation.navigate('Registro')}
+            >
+              <Text style={styles.buttonText}>REGÍSTRATE</Text>
+            </TouchableOpacity>
+          </View>
+        </ScrollView>
+      </KeyboardAvoidingView>
+    </ImageBackground>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
+  background: {
     flex: 1,
+    width: '100%',
+    height: '100%',
+  },
+  scrollContainer: {
+    flexGrow: 1,
     justifyContent: 'center',
+  },
+  container: {
     alignItems: 'center',
-    backgroundColor: '#0F172A', // azul oscuro
     padding: 20,
+    backgroundColor: 'rgba(165, 165, 167, 0.29)', 
+    marginHorizontal: 20,
+    borderRadius: 25,
   },
   title: {
     fontSize: 26,
     fontWeight: 'bold',
-    color: '#FFFFFF',
+    color: '#fffdfdff', 
     marginBottom: 25,
   },
   input: {
     width: '90%',
     borderWidth: 1,
-    borderColor: '#1E293B',
-    borderRadius: 10,
+    borderColor: '#FF4500',
+    borderRadius: 20,
     padding: 12,
     marginBottom: 15,
-    backgroundColor: '#1E293B',
-    color: '#FFFFFF',
+    backgroundColor: '#fa806bd3', 
+    color: '#fff',
+    marginTop: 60,
   },
   passwordContainer: {
     width: '90%',
     flexDirection: 'row',
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: '#1E293B',
-    borderRadius: 10,
+    borderColor: '#FF4500',
+    borderRadius: 20,
     paddingHorizontal: 10,
     marginBottom: 15,
-    backgroundColor: '#1E293B',
+    backgroundColor: '#fa806bd3',
   },
   passwordInput: {
     flex: 1,
     padding: 12,
-    color: '#FFFFFF',
+    color: '#fff',
   },
   button: {
-    width: '80%',
-    backgroundColor: '#1D4ED8', // azul brillante
+    width: '90%',
+    backgroundColor: '#FF4500', // naranja fuego
     paddingVertical: 12,
-    borderRadius: 10,
+    borderRadius: 20,
     alignItems: 'center',
     marginVertical: 10,
   },
   buttonText: {
-    color: '#FFFFFF',
+    color: '#fff',
     fontWeight: 'bold',
     fontSize: 16,
   },
   registerButton: {
-    backgroundColor: '#3B82F6', // azul más claro
+    backgroundColor: '#ff4322ff', 
   },
   text: {
-    color: '#94A3B8',
+    color: '#fdebe4ff',
     marginTop: 10,
   },
 });

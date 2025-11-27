@@ -94,11 +94,23 @@ export default function App() {
             component={WelcomeScreen}
             options={{ headerShown: false }}
           />
-          <Stack.Screen
-            name="Login"
-            component={LoginScreen}
-            options={{ title: "Iniciar Sesión" }}
-          />
+        <Stack.Screen
+          name="Login"
+          component={LoginScreen}
+          options={{
+           title: "Iniciar Sesión",
+            headerStyle: {
+            backgroundColor: '#e96333ff', 
+           },
+             headerTintColor: '#FFFFFF', 
+             headerTitleAlign: 'center', 
+             headerTitleStyle: {
+             fontWeight: 'bold', 
+             fontSize: 20,     
+           },
+         }}
+        />
+
           <Stack.Screen
             name="Registro"
             component={RegistroScreen}
